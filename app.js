@@ -43,18 +43,21 @@ async function initBoard() {
   const players = [];
 
   sportSnap.forEach(doc => {
-    const sportData = doc.data();
-    const athlete = athletes[sportData.athleteId];
+  const sportData = doc.data();
+  const athlete = athletes[sportData.athleteId];
+  if (!athlete) return;
 
-    if (!athlete) return;
-
-    players.push({
-      ...athlete,
-      ...sportData
-    });
-
-    if (sportData.sport) sports.add(sportData.sport);
+  // Map Firestore fields to app-friendly names
+  players.push({
+    ...athlete,
+    ...sportData,
+    height: athlete.ht,
+    weight: athlete.wt,
+    position: athlete.pos,
+    fullName: athlete.name,        // for consistent display
+    headCoach: athlete.headCoach || "" // optional, if you have it
   });
+});
 
   ALL_PLAYERS = players;
 
