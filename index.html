@@ -1,48 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Weatherford HS Athletic Recruiting</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weatherford HS Recruiting Board</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Optional favicon -->
+  <link rel="icon" href="logo.png" />
+
 </head>
+
 <body>
 
-<header>
-  <div class="header-content">
-    <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="Weatherford Logo" class="logo">
-    <div class="header-text">
-      <h1>Weatherford High School</h1>
-      <p>Athletic Recruiting Portal</p>
+  <!-- =============================
+       HEADER
+  ============================= -->
+  <header>
+    <h1>Weatherford HS Recruiting Board</h1>
+
+    <!-- School Logo -->
+    <img src="logo.png" alt="Weatherford High School Logo" />
+
+    <p>Player Recruiting Profiles</p>
+
+    <!-- Navigation -->
+    <nav>
+      <a href="#">All Players</a>
+      <a href="#">Offense</a>
+      <a href="#">Defense</a>
+      <a href="#">Special Teams</a>
+    </nav>
+  </header>
+
+
+  <!-- =============================
+       FILTER CONTROLS
+  ============================= -->
+  <section class="controls">
+
+    <label for="positionFilter">Position:</label>
+    <select id="positionFilter">
+      <option value="All">All</option>
+    </select>
+
+    <label for="gradeFilter">Grade:</label>
+    <select id="gradeFilter">
+      <option value="All">All</option>
+    </select>
+
+    <button id="resetFilters">Reset Filters</button>
+
+  </section>
+
+
+  <!-- =============================
+       PLAYER GRID
+  ============================= -->
+  <main>
+    <div id="profileGrid" class="profile-grid">
+      <div class="loading">Loading player profiles...</div>
     </div>
-  </div>
-</header>
+  </main>
 
-<section class="controls">
-  <div class="filter-group">
-    <label for="gradSelect">Class Year:</label>
-    <select id="gradSelect">
-      <option value="">Loading...</option>
-    </select>
-  </div>
 
-  <div class="filter-group">
-    <label for="sportSelect">Sport:</label>
-    <select id="sportSelect">
-      <option value="all">All Sports</option>
-    </select>
-  </div>
-
-  <button class="btn-primary" onclick="window.open('https://script.google.com/macros/s/AKfycbwDxJg-jRRb5dTwQlyyXBJU-hOVL7BKftLS4lZkciChCxTfbM0OnSzjRE0OwqCBJyBg/exec','_blank')">
-    ⚙️ Manage Athletes
-  </button>
-</section>
-
-<div id="coachContainer" class="coach-container"></div>
-
-<div id="athleteContainer" class="athlete-grid"></div>
-
-<script type="module" src="app.js"></script>
+  <!-- =============================
+       SCRIPT
+  ============================= -->
+  <!-- Load AFTER page renders -->
+  <script type="module" src="app.js"></script>
 
 </body>
 </html>
