@@ -30,46 +30,38 @@ let ALL_COACHES = {};
 async function initializeData() {
   try {
     // Load all collections in parallel
-    const [athleteSnap, sportSnap, coachSnap] = await Promise.all([
+    const [athleteSnap, coachSnap] = await Promise.all([
       getDocs(collection(db, "athletes")),
-      getDocs(collection(db, "athleteSports")),
       getDocs(collection(db, "coaches"))
     ]);
 
-    // Build athletes map
-    const athletes = {};
+    // Build players array and collect unique years/sports
     const years = new Set();
-    athleteSnap.forEach(doc => {
-      const data = doc.data();
-      athletes[doc.id] = data;
-      if (data.gradYear) years.add(data.gradYear);
-    });
-
-    // Build players array by joining athletes with their sports
     const sports = new Set();
     const players = [];
-    sportSnap.forEach(doc => {
-      const sportData = doc.data();
-      const athlete = athletes[sportData.athleteId];
-      if (!athlete) return;
-
+    
+    athleteSnap.forEach(doc => {
+      const data = doc.data();
+      
       players.push({
         id: doc.id,
-        name: athlete.name,
-        gradYear: athlete.gradYear,
-        photoUrl: athlete.photoUrl,
-        email: athlete.email,
-        sport: sportData.sport,
-        position: sportData.pos,
-        height: sportData.ht,
-        weight: sportData.wt,
-        jersey: sportData.jersey,
-        gpa: sportData.gpa,
-        hudl: sportData.hudl,
-        twitter: sportData.twitter
+        name: data.name,
+        gradYear: data.gradYear,
+        photoUrl: data.photoUrl,
+        email: data.email,
+        sport: data.sport,
+        position: data.pos,
+        height: data.ht,
+        weight: data.wt,
+        jersey: data.jersey,
+        gpa: data.gpa,
+        hudl: data.hudl,
+        twitter: data.twitter,
+        offers: data.offers
       });
 
-      if (sportData.sport) sports.add(sportData.sport.toLowerCase());
+      if (data.gradYear) years.add(data.gradYear);
+      if (data.sport) sports.add(data.sport.toLowerCase());
     });
 
     ALL_PLAYERS = players;
