@@ -19,38 +19,21 @@ const storage = getStorage(app);
 let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 
-// The Logo URL - ONLY for the header and broken links
-const ROO_LOGO = 'https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png';
+// Generic placeholder so the Roo Logo stays ONLY in the header
+const PLACEHOLDER = "https://via.placeholder.com/400x500?text=No+Photo";
 
-
-/* ==============================
-   IMAGE LOGIC (Optimized)
-============================== */
 async function getImageUrl(path) {
-  // 1. Handle empty or missing paths
-  if (!path || path === "") {
-    return "https://via.placeholder.com/400x500?text=No+Photo";
-  }
-  
-  // 2. If it's the full HTTPS link (like the one you shared), use it directly
-  if (path.startsWith('http')) {
-    return path;
-  }
-
-  // 3. ONLY use the Storage SDK if it's a raw path or gs:// link
+  if (!path || path === "") return PLACEHOLDER;
+  if (path.startsWith('http')) return path;
   try {
     const cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
     const imageRef = ref(storage, cleanPath);
     return await getDownloadURL(imageRef);
   } catch (err) {
-    console.error("Storage Error:", err);
-    return "https://via.placeholder.com/400x500?text=Photo+Missing";
+    return PLACEHOLDER;
   }
 }
 
-/* ==============================
-   DATA LOADING
-============================== */
 async function initializeData() {
   try {
     const [athleteSnap, coachSnap] = await Promise.all([
@@ -63,25 +46,17 @@ async function initializeData() {
 
     athleteSnap.forEach(doc => {
       const data = doc.data();
-      ALL_PLAYERS.push({
-        id: doc.id,
-        ...data,
-        photoUrl: data.photoUrl || data.photoURL || '' 
-      });
+      ALL_PLAYERS.push({ id: doc.id, ...data, photoUrl: data.photoUrl || data.photoURL || '' });
       if (data.gradYear) years.add(data.gradYear);
       if (data.sport) sportsSet.add(data.sport);
     });
 
-    coachSnap.forEach(doc => {
-      ALL_COACHES.push(doc.data());
-    });
+    coachSnap.forEach(doc => { ALL_COACHES.push(doc.data()); });
 
     populateFilters(years, sportsSet);
     await renderAthletes();
-    renderCoaches(); // Coaches don't need async images anymore based on your request
-  } catch (err) {
-    console.error("Init Error:", err);
-  }
+    renderCoaches();
+  } catch (err) { console.error(err); }
 }
 
 function populateFilters(years, sportsSet) {
@@ -94,9 +69,6 @@ function populateFilters(years, sportsSet) {
     sortedSports.map(s => `<option value="${s}">${s}</option>`).join("");
 }
 
-/* ==============================
-   RENDER COACHES (NO IMAGES)
-============================== */
 function renderCoaches() {
   const container = document.getElementById('coachContainer');
   const selectedSport = document.getElementById("sportSelect").value;
@@ -105,28 +77,23 @@ function renderCoaches() {
   if (filtered.length === 0) { container.innerHTML = ""; return; }
 
   container.innerHTML = `
-    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800;">Coaching Staff</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800; text-transform:uppercase; letter-spacing:1px;">Coaching Staff</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
       ${filtered.map(c => `
-        <div class="coach-card" style="background:white; padding:15px; border-radius:12px; box-shadow:var(--shadow);">
-          <h3 style="font-size:1rem; margin-bottom:5px;">${c.name}</h3>
-          <div style="font-size:0.8rem; font-weight:700; color:var(--royal-blue);">${c.sport}</div>
-          <div style="font-size:0.75rem; color:var(--dark-gray);">${c.title || ''}</div>
-          <a href="mailto:${c.email}" style="display:block; margin-top:10px; font-size:0.75rem; text-decoration:none; color:var(--royal-blue); font-weight:600;">Email Coach</a>
+        <div class="coach-card" style="background:white; padding:20px; border-radius:12px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+          <div style="font-size:0.7rem; font-weight:900; color:var(--royal-blue); text-transform:uppercase; margin-bottom:5px;">${(c.sport || '').toUpperCase()}</div>
+          <h3 style="font-size:1.1rem; margin-bottom:5px; color:var(--black);">${c.name}</h3>
+          <div style="font-size:0.8rem; color:var(--dark-gray); margin-bottom:10px;">${c.title || ''}</div>
+          <a href="mailto:${c.email}" style="font-size:0.85rem; text-decoration:none; color:var(--light-blue); font-weight:600; word-break:break-all;">${c.email}</a>
         </div>
       `).join("")}
     </div>
   `;
 }
 
-/* ==============================
-   RENDER ATHLETES
-============================== */
 async function createPlayerCard(player) {
   const card = document.createElement("div");
   card.className = "player-card";
-  
-  // This fetches the image from Firebase Storage
   const finalImgUrl = await getImageUrl(player.photoUrl);
 
   card.innerHTML = `
@@ -157,11 +124,7 @@ async function renderAthletes() {
   const gradYear = document.getElementById("gradSelect").value;
   const selectedSport = document.getElementById("sportSelect").value;
   const container = document.getElementById("athleteContainer");
-
-  const filtered = ALL_PLAYERS.filter(p => {
-    return p.gradYear == gradYear && (selectedSport === "all" || p.sport === selectedSport);
-  });
-
+  const filtered = ALL_PLAYERS.filter(p => p.gradYear == gradYear && (selectedSport === "all" || p.sport === selectedSport));
   container.innerHTML = "";
   for (const p of filtered) {
     const card = await createPlayerCard(p);
@@ -169,9 +132,6 @@ async function renderAthletes() {
   }
 }
 
-/* ==============================
-   INIT
-============================== */
 (async function init() {
   await initializeData();
   const refresh = async () => { await renderAthletes(); renderCoaches(); };
