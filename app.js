@@ -116,24 +116,27 @@ function populateFilters(years, sportsSet) {
 /* ==============================
    Render Coaches
 ============================== */
-function renderCoaches() {
-  const selectedSport = document.getElementById("sportSelect").value;
-  const container = document.getElementById("coachContainer");
+function renderCoaches(coaches) {
+  const container = document.getElementById('coachContainer');
 
-  let coachesToShow = [];
-  if (selectedSport === "all") {
-    coachesToShow = Object.values(ALL_COACHES);
-  } else {
-    const coach = ALL_COACHES[selectedSport];
-    if (coach) coachesToShow = [coach];
-  }
+  // Create the Grid Header
+  let html = '<h2 class="section-title" style="grid-column: 1/-1; margin-bottom: 20px; font-weight:800; color:#0033a0;">Coaching Staff</h2>';
 
-  if (coachesToShow.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
+  html += coaches.map(coach => `
+    <div class="coach-card">
+      <img src="${coach.photoUrl || 'https://via.placeholder.com/150'}" alt="${coach.name}" class="coach-photo">
+      <div class="coach-info">
+        <h3>${coach.name}</h3>
+        <p class="title">${coach.sport} • ${coach.title}</p>
+        <a href="mailto:${coach.email}" class="email">${coach.email}</a>
+      </div>
+    </div>
+  `).join('');
 
-  container.innerHTML = `
+  container.innerHTML = html;
+}
+
+container.innerHTML = `
     <h2>🏆 Coaches</h2>
     <div class="coach-grid">
       ${coachesToShow.map(c => `
