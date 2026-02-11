@@ -22,19 +22,23 @@ let ALL_COACHES = [];
 // The Logo URL - ONLY for the header and broken links
 const ROO_LOGO = 'https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png';
 
+
 /* ==============================
-   IMAGE LOGIC
+   IMAGE LOGIC (Optimized)
 ============================== */
 async function getImageUrl(path) {
-  // 1. If path is empty, return a generic gray silhouette or blank, NOT the logo
-  if (!path || path === "") return "https://via.placeholder.com/400x500?text=No+Photo";
+  // 1. Handle empty or missing paths
+  if (!path || path === "") {
+    return "https://via.placeholder.com/400x500?text=No+Photo";
+  }
   
-  // 2. If it's already a web link, return it
-  if (path.startsWith('http')) return path;
+  // 2. If it's the full HTTPS link (like the one you shared), use it directly
+  if (path.startsWith('http')) {
+    return path;
+  }
 
-  // 3. If it's a Firebase Storage path
+  // 3. ONLY use the Storage SDK if it's a raw path or gs:// link
   try {
-    // Strip "gs://roosports-117c3.firebasestorage.app/" if it exists in the string
     const cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
     const imageRef = ref(storage, cleanPath);
     return await getDownloadURL(imageRef);
