@@ -21,10 +21,13 @@ const db = getFirestore(app);
    Global Data Storage
 ============================== */
 let ALL_PLAYERS = [];
-let ALL_COACHES = {};
+let ALL_COACHES = [];
+
+// Fallback image if the URL is broken or missing
+const PLACEHOLDER_IMG = 'https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png';
 
 /* ==============================
-   Load All Data (One-time)
+   Load All Data
 ============================== */
 async function initializeData() {
   try {
@@ -35,116 +38,86 @@ async function initializeData() {
 
     const years = new Set();
     const sportsSet = new Set();
-    const players = [];
 
     athleteSnap.forEach(doc => {
       const data = doc.data();
-
-      players.push({
+      ALL_PLAYERS.push({
         id: doc.id,
-        name: data.name,
+        name: data.name || 'Athlete',
         gradYear: data.gradYear,
-        // Resiliency check: handles both photoUrl and photoURL
+        // RESOLUTION: Checks both photoUrl and photoURL
         photoUrl: data.photoUrl || data.photoURL || '',
-        email: data.email,
-        sport: data.sport,
-        position: data.pos,
-        height: data.ht,
-        weight: data.wt,
-        jersey: data.jersey,
-        gpa: data.gpa,
-        hudl: data.hudl,
-        twitter: data.twitter,
-        offers: data.offers
+        sport: data.sport || '',
+        position: data.pos || data.position || '',
+        height: data.ht || '',
+        weight: data.wt || '',
+        jersey: data.jersey || '',
+        gpa: data.gpa || '',
+        hudl: data.hudl || '',
+        twitter: data.twitter || ''
       });
 
       if (data.gradYear) years.add(data.gradYear);
       if (data.sport) sportsSet.add(data.sport);
     });
 
-    ALL_PLAYERS = players;
-
     coachSnap.forEach(doc => {
       const data = doc.data();
-      if (data.sport) {
-        // Store as normalized key to match filter dropdown
-        const key = data.sport.toLowerCase().replace(/\s+/g, '-');
-        ALL_COACHES[key] = {
-          name: data.name,
-          title: data.title,
-          email: data.email,
-          sport: data.sport
-        };
-      }
+      ALL_COACHES.push({
+        ...data,
+        photoUrl: data.photoUrl || data.photoURL || ''
+      });
     });
 
     populateFilters(years, sportsSet);
-
     renderAthletes();
     renderCoaches();
 
   } catch (err) {
     console.error("Error loading data:", err);
-    document.getElementById("athleteContainer").innerHTML =
-      `<div class="error">Failed to load data: ${err.message}</div>`;
   }
 }
 
-/* ==============================
-   Populate Filter Dropdowns
-============================== */
 function populateFilters(years, sportsSet) {
   const gradSelect = document.getElementById("gradSelect");
   const sportSelect = document.getElementById("sportSelect");
 
-  const sortedYears = [...years].sort((a, b) => a - b);
-  gradSelect.innerHTML = sortedYears
-    .map(y => `<option value="${y}">Class of ${y}</option>`)
-    .join("");
+  const sortedYears = [...years].sort((a, b) => b - a);
+  gradSelect.innerHTML = sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
 
   const sortedSports = [...sportsSet].sort();
-  sportSelect.innerHTML =
-    `<option value="all">All Sports</option>` +
-    sortedSports
-      .map(s => {
-        const val = s.toLowerCase().replace(/\s+/g, '-');
-        return `<option value="${val}">${s}</option>`;
-      })
-      .join("");
+  sportSelect.innerHTML = `<option value="all">All Sports</option>` +
+    sortedSports.map(s => `<option value="${s}">${s}</option>`).join("");
 }
 
 /* ==============================
-   Render Coaches
+   Render Coaches (Grid)
 ============================== */
-function renderCoaches(coaches) {
+function renderCoaches() {
   const container = document.getElementById('coachContainer');
+  const selectedSport = document.getElementById("sportSelect").value;
 
-  // Create the Grid Header
-  let html = '<h2 class="section-title" style="grid-column: 1/-1; margin-bottom: 20px; font-weight:800; color:#0033a0;">Coaching Staff</h2>';
+  const filtered = ALL_COACHES.filter(c =>
+    selectedSport === "all" || c.sport === selectedSport
+  );
 
-  html += coaches.map(coach => `
-    <div class="coach-card">
-      <img src="${coach.photoUrl || 'https://via.placeholder.com/150'}" alt="${coach.name}" class="coach-photo">
-      <div class="coach-info">
-        <h3>${coach.name}</h3>
-        <p class="title">${coach.sport} • ${coach.title}</p>
-        <a href="mailto:${coach.email}" class="email">${coach.email}</a>
-      </div>
-    </div>
-  `).join('');
+  if (filtered.length === 0) {
+    container.innerHTML = "";
+    return;
+  }
 
-  container.innerHTML = html;
-}
-
-container.innerHTML = `
-    <h2>🏆 Coaches</h2>
-    <div class="coach-grid">
-      ${coachesToShow.map(c => `
-        <div class="coach-card">
-          <h3>${c.name}</h3>
-          ${c.sport ? `<div class="sport-tag">${c.sport}</div>` : ''}
-          ${c.title ? `<div class="title">${c.title}</div>` : ''}
-          ${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : ''}
+  container.innerHTML = `
+    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800;">Coaching Staff</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+      ${filtered.map(c => `
+        <div class="coach-card" style="background:white; padding:15px; border-radius:12px; text-align:center; box-shadow:var(--shadow);">
+          <img src="${c.photoUrl || PLACEHOLDER_IMG}" 
+               onerror="this.src='${PLACEHOLDER_IMG}'"
+               style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
+          <h3 style="font-size:1rem; margin-bottom:5px;">${c.name}</h3>
+          <div style="font-size:0.8rem; font-weight:700; color:var(--royal-blue);">${c.sport}</div>
+          <div style="font-size:0.75rem; color:var(--dark-gray); margin-bottom:8px;">${c.title}</div>
+          <a href="mailto:${c.email}" style="font-size:0.75rem; text-decoration:none; color:var(--royal-blue); font-weight:600;">Email Coach</a>
         </div>
       `).join("")}
     </div>
@@ -158,105 +131,63 @@ function createPlayerCard(player) {
   const card = document.createElement("div");
   card.className = "player-card";
 
-  const stats = [];
-  if (player.position) stats.push({ label: "Pos", value: player.position });
-  if (player.height) stats.push({ label: "Ht", value: player.height });
-  if (player.weight) stats.push({ label: "Wt", value: `${player.weight} lbs` });
-  if (player.gpa) stats.push({ label: "GPA", value: player.gpa });
-
-  let statsHTML = stats.length > 0 ?
-    `<div class="player-stats">${stats.map(s => `
-      <div class="stat-item">
-        <span class="stat-label">${s.label}</span>
-        <span class="stat-value">${s.value}</span>
-      </div>`).join('')}</div>` : '';
-
-  let linksHTML = '';
-  if (player.hudl || player.twitter) {
-    linksHTML = '<div class="player-links">';
-    if (player.hudl) linksHTML += `<a href="${player.hudl}" target="_blank" class="hudl">🎥 Hudl</a>`;
-    if (player.twitter) linksHTML += `<a href="${player.twitter}" target="_blank" class="twitter">𝕏 Twitter</a>`;
-    linksHTML += '</div>';
-  }
-
-  // Use the Blue/Gold Roo color scheme for placeholder
-  const placeholder = 'https://via.placeholder.com/300x280/0033a0/ffffff?text=No+Photo';
+  // Use the school logo if no photo is available
+  const imgToUse = player.photoUrl && player.photoUrl !== "" ? player.photoUrl : PLACEHOLDER_IMG;
 
   card.innerHTML = `
-    <div class="photo-wrapper" style="height:280px; overflow:hidden; background:#eee;">
+    <div class="photo-wrapper">
       <img class="player-photo" 
-           src="${player.photoUrl || placeholder}" 
+           src="${imgToUse}" 
            alt="${player.name}"
-           style="width:100%; height:100%; object-fit:cover; object-position:top;"
-           onerror="this.onerror=null;this.src='${placeholder}';">
+           onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}';">
     </div>
     <div class="card-content">
+      <span class="sport-badge">${player.sport}</span>
       <h3>
-        <span>${player.name || 'Athlete'}</span>
+        <span>${player.name}</span>
         ${player.jersey ? `<span class="jersey">#${player.jersey}</span>` : ''}
       </h3>
-      ${player.sport ? `<div class="sport-badge">${player.sport}</div>` : ''}
-      ${statsHTML}
-      ${linksHTML}
+      <div class="player-stats">
+        <div class="stat-item"><span class="stat-label">Pos</span><span class="stat-value">${player.position || '-'}</span></div>
+        <div class="stat-item"><span class="stat-label">Ht/Wt</span><span class="stat-value">${player.height}/${player.weight}</span></div>
+        <div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${player.gpa || '-'}</span></div>
+      </div>
+      <div class="player-links">
+        ${player.hudl ? `<a href="${player.hudl}" target="_blank" class="hudl">Hudl</a>` : ''}
+        ${player.twitter ? `<a href="${player.twitter}" target="_blank" class="twitter">Twitter</a>` : ''}
+      </div>
     </div>
   `;
-
   return card;
 }
 
-/* ==============================
-   Render Athletes
-============================== */
 function renderAthletes() {
-  const gradYearStr = document.getElementById("gradSelect").value;
-  const selectedSportVal = document.getElementById("sportSelect").value;
+  const gradYear = document.getElementById("gradSelect").value;
+  const selectedSport = document.getElementById("sportSelect").value;
   const container = document.getElementById("athleteContainer");
 
-  if (!gradYearStr) {
-    container.innerHTML = '<div class="loading">Please select a class year</div>';
-    return;
-  }
-
   const filtered = ALL_PLAYERS.filter(p => {
-    const gradMatch = p.gradYear == gradYearStr;
-    // Normalize athlete sport to match dropdown value (e.g., "Track & Field" -> "track-and-field")
-    const normalizedSport = (p.sport || "").toLowerCase().replace(/\s+/g, '-');
-    const sportMatch = selectedSportVal === "all" || normalizedSport === selectedSportVal;
+    const gradMatch = p.gradYear == gradYear;
+    const sportMatch = selectedSport === "all" || p.sport === selectedSport;
     return gradMatch && sportMatch;
   });
 
+  container.innerHTML = "";
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="no-data">
-        <h3>No Athletes Found</h3>
-        <p>No athletes found for Class of ${gradYearStr}</p>
-      </div>`;
+    container.innerHTML = `<div style="padding:40px; text-align:center; grid-column:1/-1;">No athletes found for this selection.</div>`;
     return;
   }
 
-  filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  container.innerHTML = "";
-  filtered.forEach(player => container.appendChild(createPlayerCard(player)));
+  filtered.sort((a, b) => a.name.localeCompare(b.name));
+  filtered.forEach(p => container.appendChild(createPlayerCard(p)));
 }
 
 /* ==============================
-   Initialize Application
+   Initialization
 ============================== */
 (async function init() {
-  try {
-    await initializeData();
+  await initializeData();
 
-    document.getElementById("gradSelect").addEventListener("change", () => {
-      renderAthletes();
-      renderCoaches();
-    });
-
-    document.getElementById("sportSelect").addEventListener("change", () => {
-      renderAthletes();
-      renderCoaches();
-    });
-
-  } catch (err) {
-    console.error("Initialization error:", err);
-  }
+  document.getElementById("gradSelect").addEventListener("change", () => { renderAthletes(); renderCoaches(); });
+  document.getElementById("sportSelect").addEventListener("change", () => { renderAthletes(); renderCoaches(); });
 })();

@@ -1,20 +1,21 @@
 /* =============================
-   Elite Sports Color Palette
+   Color Palette
 ============================= */
 :root {
   --royal-blue: #0033a0;
-  --dark-blue: #001d5a;
-  --accent-blue: #0056ff;
-  --white: #ffffff;
-  --bg-gray: #f2f4f7;
-  --text-main: #1a1a1b;
-  --text-muted: #65676b;
-  --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  --hover-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  /* Weatherford Primary Blue */
+  --dark-blue: #002270;
+  --light-blue: #4169E1;
+  --white: #FFFFFF;
+  --light-gray: #F8F9FA;
+  --medium-gray: #CED4DA;
+  --dark-gray: #495057;
+  --black: #212529;
+  --shadow: rgba(0, 0, 0, 0.1);
 }
 
 /* =============================
-   Global & Layout
+   Global Styles
 ============================= */
 * {
   margin: 0;
@@ -23,299 +24,167 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--bg-gray);
-  color: var(--text-main);
-  line-height: 1.6;
-}
-
-.container {
-  max-width: 1250px;
-  margin: 0 auto;
-  padding: 0 20px;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background-color: var(--light-gray);
+  color: var(--black);
+  padding: 20px;
+  line-height: 1.5;
 }
 
 /* =============================
-   Hero Header
+   Header
 ============================= */
 header {
-  background: linear-gradient(135deg, var(--dark-blue) 0%, var(--royal-blue) 100%);
+  background: linear-gradient(135deg, var(--royal-blue) 0%, var(--dark-blue) 100%);
   color: var(--white);
-  padding: 80px 20px;
-  text-align: center;
-  margin-bottom: 50px;
-  clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+  padding: 40px 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px var(--shadow);
 }
 
 .header-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 25px;
 }
 
 .logo {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   background: white;
   border-radius: 50%;
-  padding: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  padding: 8px;
   object-fit: contain;
 }
 
 .header-text h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 800;
-  letter-spacing: -1px;
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.header-text p {
-  font-weight: 600;
-  opacity: 0.9;
-  letter-spacing: 1px;
+  font-size: 2.2rem;
+  letter-spacing: -0.5px;
 }
 
 /* =============================
-   Filter & Controls Bar
+   Controls Section
 ============================= */
 .controls {
+  max-width: 1200px;
+  margin: 0 auto 30px;
   background: white;
-  padding: 25px;
+  padding: 20px;
   border-radius: 12px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  box-shadow: var(--card-shadow);
-  margin: -100px auto 50px;
-  position: relative;
-  z-index: 10;
   gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-width: 200px;
+  gap: 5px;
 }
 
 .filter-group label {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--royal-blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--dark-gray);
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .filter-group select {
-  padding: 12px 15px;
-  border: 2px solid #edf2f7;
-  border-radius: 8px;
-  width: 100%;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  background-color: #fff;
-}
-
-.btn-primary {
-  background: var(--royal-blue);
-  color: white;
-  border: none;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.btn-primary:hover {
-  background: var(--accent-blue);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 51, 160, 0.3);
+  padding: 10px;
+  border: 1px solid var(--medium-gray);
+  border-radius: 6px;
+  min-width: 200px;
 }
 
 /* =============================
-   Coach Grid Section
+   Containers
 ============================= */
-.section-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 30px;
-  color: var(--dark-blue);
-  border-left: 6px solid var(--royal-blue);
-  padding-left: 15px;
-  text-transform: uppercase;
+.coach-container,
+.athlete-grid {
+  max-width: 1200px;
+  margin: 0 auto 40px;
 }
 
-.coach-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 25px;
-  margin-bottom: 60px;
-}
-
-.coach-card {
-  background: white;
-  border-radius: 15px;
-  padding: 30px 20px;
-  text-align: center;
-  box-shadow: var(--card-shadow);
-  border-top: 5px solid var(--royal-blue);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.coach-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--hover-shadow);
-}
-
-.coach-photo {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin: 0 auto 15px;
-  border: 4px solid #f8f9fa;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.coach-card h3 {
-  font-size: 1.25rem;
-  margin-bottom: 5px;
-  color: var(--dark-blue);
-  font-weight: 700;
-}
-
-.coach-card .coach-sport {
-  color: var(--royal-blue);
-  font-weight: 800;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-
-.coach-card .coach-title {
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-}
-
-.coach-card .email-link {
-  display: inline-block;
-  color: var(--text-main);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  background: #f1f3f5;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.coach-card .email-link:hover {
-  background: #e9ecef;
-}
-
-/* =============================
-   Athlete Grid Section
-============================= */
 .athlete-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 30px;
-  padding-bottom: 80px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
 }
 
+/* =============================
+   Player Card
+============================= */
 .player-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--card-shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 4px 10px var(--shadow);
+  transition: transform 0.2s ease;
 }
 
 .player-card:hover {
-  transform: translateY(-10px);
-  box-shadow: var(--hover-shadow);
+  transform: translateY(-5px);
 }
 
+/* Fixed Photo Aspect Ratio */
 .photo-wrapper {
-  position: relative;
   width: 100%;
-  height: 350px;
-  background: #e9ecef;
+  height: 320px;
+  background-color: #eee;
+  overflow: hidden;
 }
 
 .player-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top center;
-}
-
-.sport-tag {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background: var(--royal-blue);
-  color: white;
-  padding: 5px 12px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  z-index: 2;
+  object-position: top;
 }
 
 .card-content {
-  padding: 25px;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
+  padding: 20px;
 }
 
-.card-header {
+.card-content h3 {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-.card-header h3 {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--dark-blue);
-  line-height: 1.2;
-}
-
-.jersey-pill {
-  background: #000;
+.jersey {
+  background: var(--royal-blue);
   color: white;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 0.9rem;
 }
 
-.stats-grid {
+.sport-badge {
+  background: #e9ecef;
+  color: var(--dark-gray);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  display: inline-block;
+}
+
+/* Stats Box */
+.player-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
   background: #f8f9fa;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+  padding: 12px;
+  border-radius: 8px;
 }
 
 .stat-item {
@@ -324,68 +193,52 @@ header {
 }
 
 .stat-label {
-  font-size: 0.65rem;
-  color: #8e9499;
-  font-weight: 800;
+  font-size: 0.7rem;
+  color: #6c757d;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .stat-value {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-main);
 }
 
+/* Links */
 .player-links {
-  margin-top: auto;
   display: flex;
   gap: 10px;
+  margin-top: 20px;
 }
 
 .player-links a {
   flex: 1;
   text-align: center;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.75rem;
-  text-transform: uppercase;
   text-decoration: none;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: white;
-  transition: opacity 0.2s;
 }
 
 .hudl {
-  background-color: #ff3300;
+  background: #000;
 }
 
 .twitter {
-  background-color: #000000;
+  background: #1DA1F2;
 }
 
-/* Modern X/Twitter look */
-
-/* =============================
-   Responsive Adjustments
-============================= */
+/* Responsive */
 @media (max-width: 600px) {
-  header {
-    padding: 60px 20px;
-    clip-path: none;
-    margin-bottom: 30px;
+  .header-content {
+    flex-direction: column;
+    text-align: center;
   }
 
   .controls {
-    margin-top: 0;
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .btn-primary {
-    width: 100%;
-  }
-
-  .athlete-grid {
-    grid-template-columns: 1fr;
   }
 }
