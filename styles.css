@@ -1,280 +1,193 @@
 /* =============================
-   Color Palette
+   Design Variables
 ============================= */
 :root {
   --royal-blue: #0033a0;
-  /* Weatherford Primary Blue */
   --dark-blue: #002270;
   --light-blue: #4169E1;
   --white: #FFFFFF;
-  --light-gray: #F8F9FA;
-  --medium-gray: #CED4DA;
+  --light-gray: #F1F3F5;
+  --medium-gray: #DEE2E6;
   --dark-gray: #495057;
-  --black: #212529;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --black: #1A1A1B;
+  --card-border: #E0E4E8;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 /* =============================
-   Global Styles
+   Global & Layout
 ============================= */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  margin: 0; padding: 0; box-sizing: border-box;
 }
 
 body {
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, sans-serif;
   background-color: var(--light-gray);
   color: var(--black);
   padding: 20px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* =============================
-   Header
-============================= */
 header {
   background: linear-gradient(135deg, var(--royal-blue) 0%, var(--dark-blue) 100%);
   color: var(--white);
-  padding: 40px 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 15px var(--shadow);
+  padding: 50px 20px;
+  border-radius: 16px;
+  margin-bottom: 40px;
+  box-shadow: var(--shadow-lg);
+  border-bottom: 6px solid #ffc107; /* Weatherford Gold touch */
 }
 
 .header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 25px;
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; gap: 30px;
 }
 
 .logo {
-  width: 90px;
-  height: 90px;
-  background: white;
-  border-radius: 50%;
-  padding: 8px;
-  object-fit: contain;
-}
-
-.header-text h1 {
-  font-size: 2.2rem;
-  letter-spacing: -0.5px;
+  width: 100px; height: 100px;
+  background: white; border-radius: 50%;
+  padding: 10px; object-fit: contain;
+  border: 4px solid rgba(255,255,255,0.3);
 }
 
 /* =============================
-   Controls Section
+   Controls
 ============================= */
 .controls {
-  max-width: 1200px;
-  margin: 0 auto 30px;
-  background: white;
-  padding: 20px;
+  max-width: 1200px; margin: 0 auto 40px;
+  background: white; padding: 25px;
   border-radius: 12px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  display: flex; gap: 20px; flex-wrap: wrap;
   align-items: center;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  border: 2px solid var(--card-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-group label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--dark-gray);
-  text-transform: uppercase;
+  font-size: 0.75rem; font-weight: 800;
+  color: var(--royal-blue); text-transform: uppercase;
+  display: block; margin-bottom: 8px;
 }
 
 .filter-group select {
-  padding: 10px;
-  border: 1px solid var(--medium-gray);
-  border-radius: 6px;
-  min-width: 200px;
+  padding: 12px; border: 2px solid var(--medium-gray);
+  border-radius: 8px; min-width: 220px;
+  font-weight: 600; outline: none;
+}
+
+.filter-group select:focus {
+  border-color: var(--royal-blue);
 }
 
 /* =============================
-   Containers
+   Player Cards (The "Pop" Section)
 ============================= */
-.coach-container,
-.athlete-grid {
-  max-width: 1200px;
-  margin: 0 auto 40px;
-}
-
 .athlete-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
 }
 
-/* =============================
-   Player Card
-============================= */
 .player-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 10px var(--shadow);
-  transition: transform 0.2s ease;
+  border: 3px solid var(--card-border); /* Thicker Outline */
+  box-shadow: var(--shadow-sm);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .player-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-12px);
+  border-color: var(--royal-blue);
+  box-shadow: 0 20px 40px rgba(0, 51, 160, 0.2);
 }
 
-/* Fixed Photo Aspect Ratio */
 .photo-wrapper {
   width: 100%;
-  height: 320px;
-  background-color: #eee;
-  overflow: hidden;
+  height: 380px; /* Locked height so card never collapses */
+  background-color: #212529;
+  position: relative;
+  border-bottom: 5px solid var(--royal-blue);
 }
 
 .player-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top;
 }
 
-.card-content {
-  padding: 20px;
+.card-content { padding: 25px; }
+
+.sport-badge {
+  background: var(--royal-blue);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 15px; display: inline-block;
 }
 
 .card-content h3 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  font-size: 1.5rem; font-weight: 800;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
 }
 
 .jersey {
-  background: var(--royal-blue);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  color: var(--royal-blue); font-size: 1.2rem;
 }
 
-.sport-badge {
-  background: #e9ecef;
-  color: var(--dark-gray);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 15px;
-  display: inline-block;
-}
-
-/* Stats Box */
 .player-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  background: #f8f9fa;
-  padding: 12px;
-  border-radius: 8px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; background: #F8F9FA;
+  padding: 15px; border-radius: 12px;
+  border: 1px solid var(--medium-gray);
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
+.stat-item { text-align: center; }
+.stat-label { font-size: 0.65rem; font-weight: 800; color: var(--dark-gray); text-transform: uppercase; }
+.stat-value { font-size: 1rem; font-weight: 800; display: block; }
 
-.stat-label {
-  font-size: 0.7rem;
-  color: #6c757d;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.stat-value {
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-/* Links */
-.player-links {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
+.player-links { display: flex; gap: 12px; margin-top: 25px; }
 .player-links a {
-  flex: 1;
-  text-align: center;
-  text-decoration: none;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: white;
+  flex: 1; text-align: center; text-decoration: none;
+  padding: 12px; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 800; color: white;
+  transition: opacity 0.2s;
 }
 
-.hudl {
-  background: #000;
-}
+.hudl { background: #000; }
+.twitter { background: #1DA1F2; }
 
-.twitter {
-  background: #1DA1F2;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .header-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  /* Better Depth for Cards */
-.player-card {
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.1);
-  border: 1px solid rgba(0,0,0,0.05);
-  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-}
-
-.player-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 14px 28px rgba(0,51,160,0.25), 0 10px 10px rgba(0,51,160,0.22);
-}
-
-/* Coach Card specific styling */
+/* =============================
+   Coach Cards
+============================= */
 .coach-card {
-  background: white; 
-  padding: 20px; 
-  border-radius: 12px; 
-  border: 1px solid #eee; 
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  background: white; padding: 25px;
+  border-radius: 12px; border: 3px solid var(--royal-blue);
+  margin-bottom: 20px; position: relative;
+  box-shadow: var(--shadow-sm);
 }
 
 .coach-sport-tag {
-  font-size: 0.7rem; 
-  font-weight: 900; 
-  color: var(--royal-blue); 
-  margin-bottom: 5px;
-  letter-spacing: 1px;
+  font-size: 0.75rem; font-weight: 900; color: var(--royal-blue);
+  margin-bottom: 10px; letter-spacing: 1px;
 }
 
 .coach-email-link {
-  font-size: 0.85rem; 
-  text-decoration: none; 
-  color: var(--light-blue); 
-  font-weight: 600; 
-  word-break: break-all;
+  font-size: 0.9rem; text-decoration: none;
+  color: var(--dark-blue); font-weight: 700;
+  border-bottom: 2px solid var(--medium-gray);
 }
+
+/* =============================
+   Mobile
+============================= */
+@media (max-width: 600px) {
+  .header-content { flex-direction: column; text-align: center; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .photo-wrapper { height: 320px; }
 }
