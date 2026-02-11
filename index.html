@@ -1,43 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weatherford HS Athletic Recruiting</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<header>
-  <div class="header-content">
-    <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="Weatherford Logo" class="logo">
-    <div class="header-text">
-      <h1>Weatherford High School</h1>
-      <p>Athletic Recruiting Portal</p>
+
+  <header>
+    <div class="header-content">
+      <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="WHS Logo"
+        class="logo">
+      <div class="header-text">
+        <h1>Weatherford High School</h1>
+        <p>Athletic Recruiting Portal</p>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<section class="controls">
-  <div class="filter-group">
-    <label for="gradSelect">Class Year:</label>
-    <select id="gradSelect">
-      <option value="">Loading...</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label for="sportSelect">Sport:</label>
-    <select id="sportSelect">
-      <option value="all">All Sports</option>
-    </select>
-  </div>
-  <button class="btn-primary" onclick="window.open('https://script.google.com/a/macros/weatherfordisd.com/s/AKfycbwq03n2XGzw68-cdTdKzg-RzSmEjojvEhIhdnn2ONT8_gjF0VFvldlLwjv1iKPgxGdH/exec','_blank')">
-    ⚙️ Manage Athletes
-  </button>
-</section>
+  <section class="controls">
+    <div class="filter-group">
+      <label for="gradSelect">Class Year</label>
+      <select id="gradSelect">
+        <option value="">Loading years...</option>
+      </select>
+    </div>
 
-<div id="coachContainer" class="coach-container"></div>
-<div id="athleteContainer" class="athlete-grid"></div>
+    <div class="filter-group">
+      <label for="sportSelect">Sport</label>
+      <select id="sportSelect">
+        <option value="all">All Sports</option>
+      </select>
+    </div>
 
-<script type="module" src="app.js"></script>
+    <button class="btn-primary"
+      style="margin-left: auto; padding: 12px 20px; background: #0033a0; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;"
+      onclick="window.open('https://script.google.com/a/macros/weatherfordisd.com/s/AKfycbwq03n2XGzw68-cdTdKzg-RzSmEjojvEhIhdnn2ONT8_gjF0VFvldlLwjv1iKPgxGdH/exec','_blank')">
+      ⚙️ Coach Login
+    </button>
+  </section>
+
+  <div id="coachContainer" class="coach-container"></div>
+
+  <main id="athleteContainer" class="athlete-grid">
+  </main>
+
+  <script type="module" src="app.js"></script>
 </body>
+
 </html>
