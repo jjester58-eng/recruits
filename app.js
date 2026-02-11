@@ -20,7 +20,6 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
-// Image Expansion
 window.expandImage = (src) => {
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImg");
@@ -70,7 +69,7 @@ function populateFilters(years, sportsSet) {
   const sortedYears = [...years].sort((a, b) => b - a);
   gradSelect.innerHTML = sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
   const sortedSports = [...sportsSet].sort();
-  sportSelect.innerHTML = `<option value="all">Select a Sport</option>` +
+  sportSelect.innerHTML = `<option value="all">All Sports (Coaches Only)</option>` +
     sortedSports.map(s => `<option value="${s}">${s}</option>`).join("");
 }
 
@@ -81,8 +80,12 @@ async function renderContent() {
   const athleteContainer = document.getElementById("athleteContainer");
   const coachContainer = document.getElementById("coachContainer");
 
-  // 1. Coaches
-  const filteredCoaches = ALL_COACHES.filter(c => selectedSport !== "all" && c.sport === selectedSport);
+  // 1. Coaches Logic (Shown by default, filtered by sport if selected)
+  const filteredCoaches = ALL_COACHES.filter(c => 
+    (selectedSport === "all" || c.sport === selectedSport) &&
+    (c.name || "").toLowerCase().includes(searchTerm)
+  );
+
   if (filteredCoaches.length > 0) {
     coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` + 
       filteredCoaches.map(c => `
@@ -90,15 +93,15 @@ async function renderContent() {
         <div>
           <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
           <h3>${c.name}</h3>
-          <div style="font-size:0.85rem; color:var(--dark-gray); margin-bottom:12px; font-weight:600;">${c.title || ''}</div>
+          <div class="coach-title">${c.title || ''}</div>
         </div>
         <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
       </div>`).join("");
   } else { coachContainer.innerHTML = ""; }
 
-  // 2. Athletes
+  // 2. Athletes Logic (Hidden until a sport is chosen)
   if (selectedSport === "all") {
-    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px; color:var(--dark-gray); font-weight:700;">Select a sport to view athletes.</div>`;
+    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--dark-gray); border: 2px dashed var(--medium-gray); border-radius:12px;">Select a specific sport above to view athlete recruits.</div>`;
     return;
   }
 
@@ -129,7 +132,7 @@ async function renderContent() {
         </div>
       </div>`;
   }));
-  athleteContainer.innerHTML = cards.length > 0 ? cards.join("") : `<div style="grid-column: 1/-1; text-align:center; padding:50px;">No matching recruits found.</div>`;
+  athleteContainer.innerHTML = cards.length > 0 ? cards.join("") : `<div style="grid-column: 1/-1; text-align:center; padding:50px;">No recruits found for this criteria.</div>`;
 }
 
 initializeData();
