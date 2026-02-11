@@ -1,24 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weatherford HS Athletic Recruiting</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
   <header>
     <div class="header-content">
-      <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="WHS Logo"
-        class="logo">
+      <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="WHS Logo" class="logo">
       <div class="header-text">
         <h1>Weatherford High School</h1>
         <p>Athletic Recruiting Portal</p>
@@ -30,15 +25,20 @@
     <div class="filter-group">
       <label for="gradSelect">Class Year</label>
       <select id="gradSelect">
-        <option value="">Loading years...</option>
+        <option value="">Loading...</option>
       </select>
     </div>
 
     <div class="filter-group">
       <label for="sportSelect">Sport</label>
       <select id="sportSelect">
-        <option value="all">All Sports</option>
+        <option value="all">Select a Sport</option>
       </select>
+    </div>
+
+    <div class="filter-group search-box">
+      <label for="nameSearch">Search Athlete</label>
+      <input type="text" id="nameSearch" placeholder="Type name...">
     </div>
 
     <button class="btn-primary"
@@ -49,23 +49,27 @@
   </section>
 
   <div id="coachContainer" class="coach-container"></div>
+  <main id="athleteContainer" class="athlete-grid"></main>
 
-  <main id="athleteContainer" class="athlete-grid">
-  </main>
+  <div id="imageModal" class="modal" onclick="this.style.display='none'">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg">
+  </div>
 
   <script type="module" src="app.js"></script>
-</body>
-<div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-  <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" 
-       style="width:120px; animation: roo-pulse 1.5s infinite ease-in-out;" alt="Loading...">
-  <p style="margin-top:20px; font-weight:800; color:#0033a0; letter-spacing:2px;">LOADING RECRUITS...</p>
-</div>
 
-<style>
-@keyframes roo-pulse {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.8; }
-}
-</style>
+  <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" 
+         style="width:120px; animation: roo-pulse 1.5s infinite ease-in-out;" alt="Loading...">
+    <p style="margin-top:20px; font-weight:800; color:#0033a0; letter-spacing:2px;">LOADING RECRUITS...</p>
+  </div>
+
+  <style>
+    @keyframes roo-pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+  </style>
+</body>
 </html>

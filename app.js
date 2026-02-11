@@ -20,6 +20,14 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
+// Image Expansion
+window.expandImage = (src) => {
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImg");
+  modal.style.display = "flex";
+  modalImg.src = src;
+};
+
 async function getImageUrl(path) {
   if (!path || path === "") return PLACEHOLDER;
   if (path.startsWith('http')) return path;
@@ -29,7 +37,6 @@ async function getImageUrl(path) {
     const imageRef = ref(storage, cleanPath);
     return await getDownloadURL(imageRef);
   } catch (err) {
-    console.warn("Image fetch error:", err);
     return PLACEHOLDER;
   }
 }
@@ -40,69 +47,76 @@ async function initializeData() {
       getDocs(collection(db, "athletes")),
       getDocs(collection(db, "coaches"))
     ]);
-
     const years = new Set();
     const sportsSet = new Set();
-
     athleteSnap.forEach(doc => {
       const data = doc.data();
       ALL_PLAYERS.push({ id: doc.id, ...data });
       if (data.gradYear) years.add(data.gradYear);
       if (data.sport) sportsSet.add(data.sport);
     });
-
     coachSnap.forEach(doc => { ALL_COACHES.push(doc.data()); });
-
     populateFilters(years, sportsSet);
     await renderContent();
-
-    const loader = document.getElementById('loadingOverlay');
-    if(loader) loader.style.display = 'none';
-
+    if(document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none';
   } catch (err) {
-    console.error("Critical Load Error:", err);
-    const loader = document.getElementById('loadingOverlay');
-    if(loader) loader.style.display = 'none';
+    console.error("Load Error:", err);
   }
 }
 
 function populateFilters(years, sportsSet) {
   const gradSelect = document.getElementById("gradSelect");
   const sportSelect = document.getElementById("sportSelect");
-  
   const sortedYears = [...years].sort((a, b) => b - a);
   gradSelect.innerHTML = sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
-  
   const sortedSports = [...sportsSet].sort();
-  sportSelect.innerHTML = `<option value="all">All Sports</option>` +
+  sportSelect.innerHTML = `<option value="all">Select a Sport</option>` +
     sortedSports.map(s => `<option value="${s}">${s}</option>`).join("");
 }
 
 async function renderContent() {
   const gradYear = document.getElementById("gradSelect").value;
   const selectedSport = document.getElementById("sportSelect").value;
+  const searchTerm = document.getElementById("nameSearch").value.toLowerCase();
   const athleteContainer = document.getElementById("athleteContainer");
   const coachContainer = document.getElementById("coachContainer");
 
-  // 1. ATHLETES
+  // 1. Coaches
+  const filteredCoaches = ALL_COACHES.filter(c => selectedSport !== "all" && c.sport === selectedSport);
+  if (filteredCoaches.length > 0) {
+    coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` + 
+      filteredCoaches.map(c => `
+      <div class="coach-card">
+        <div>
+          <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
+          <h3>${c.name}</h3>
+          <div style="font-size:0.85rem; color:var(--dark-gray); margin-bottom:12px; font-weight:600;">${c.title || ''}</div>
+        </div>
+        <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
+      </div>`).join("");
+  } else { coachContainer.innerHTML = ""; }
+
+  // 2. Athletes
+  if (selectedSport === "all") {
+    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px; color:var(--dark-gray); font-weight:700;">Select a sport to view athletes.</div>`;
+    return;
+  }
+
   const filteredAthletes = ALL_PLAYERS.filter(p => 
-    p.gradYear == gradYear && (selectedSport === "all" || p.sport === selectedSport)
+    p.gradYear == gradYear && p.sport === selectedSport && (p.name || "").toLowerCase().includes(searchTerm)
   );
-  
+
   athleteContainer.innerHTML = "";
-  const athleteCards = await Promise.all(filteredAthletes.map(async (p) => {
+  const cards = await Promise.all(filteredAthletes.map(async (p) => {
     const img = await getImageUrl(p.photoUrl || p.photoURL);
     return `
       <div class="player-card">
-        <div class="photo-wrapper">
+        <div class="photo-wrapper" onclick="expandImage('${img}')">
           <img class="player-photo" src="${img}" alt="${p.name}" loading="lazy">
         </div>
         <div class="card-content">
           <span class="sport-badge">${p.sport}</span>
-          <h3>
-            <span>${p.name}</span>
-            <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span>
-          </h3>
+          <h3><span>${p.name}</span> <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span></h3>
           <div class="player-stats">
             <div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${p.position || p.pos || '-'}</span></div>
             <div class="stat-item"><span class="stat-label">HT/WT</span><span class="stat-value">${p.height || '-'}/${p.weight || '-'}</span></div>
@@ -113,37 +127,12 @@ async function renderContent() {
             ${p.twitter ? `<a href="${p.twitter}" target="_blank" class="twitter">TWITTER</a>` : ''}
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }));
-  athleteContainer.innerHTML = athleteCards.join("");
-
-  // 2. COACHES
-  const filteredCoaches = ALL_COACHES.filter(c => selectedSport === "all" || c.sport === selectedSport);
-  if (filteredCoaches.length > 0) {
-    coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` + 
-      filteredCoaches.map(c => `
-      <div class="coach-card">
-        <div>
-          <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
-          <h3 style="font-size: 1.2rem; margin-bottom: 5px;">${c.name}</h3>
-          <div style="font-size: 0.85rem; color: var(--dark-gray); margin-bottom: 12px; font-weight: 600;">
-            ${c.title || ''}
-          </div>
-        </div>
-        <a href="mailto:${c.email}" class="coach-email-link" style="text-decoration: none; font-weight: 700; color: var(--royal-blue); border: 1px solid var(--royal-blue); padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; width: fit-content;">
-          ${c.email}
-        </a>
-      </div>
-    `).join("");
-  } else {
-    coachContainer.innerHTML = "";
-  }
+  athleteContainer.innerHTML = cards.length > 0 ? cards.join("") : `<div style="grid-column: 1/-1; text-align:center; padding:50px;">No matching recruits found.</div>`;
 }
 
-// Initial Kickoff
 initializeData();
-
-// Event Listeners
 document.getElementById("gradSelect").addEventListener("change", renderContent);
 document.getElementById("sportSelect").addEventListener("change", renderContent);
+document.getElementById("nameSearch").addEventListener("input", renderContent);
