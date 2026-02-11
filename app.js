@@ -16,7 +16,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-console.log("Firebase Project ID:", db.app.options.projectId);
 
 /* ==============================
    Global Data Storage
@@ -29,25 +28,24 @@ let ALL_COACHES = {};
 ============================== */
 async function initializeData() {
   try {
-    // Load all collections in parallel
     const [athleteSnap, coachSnap] = await Promise.all([
       getDocs(collection(db, "athletes")),
       getDocs(collection(db, "coaches"))
     ]);
 
-    // Build players array and collect unique years/sports
     const years = new Set();
-    const sports = new Set();
+    const sportsSet = new Set();
     const players = [];
-    
+
     athleteSnap.forEach(doc => {
       const data = doc.data();
-      
+
       players.push({
         id: doc.id,
         name: data.name,
         gradYear: data.gradYear,
-        photoUrl: data.photoUrl,
+        // Resiliency check: handles both photoUrl and photoURL
+        photoUrl: data.photoUrl || data.photoURL || '',
         email: data.email,
         sport: data.sport,
         position: data.pos,
@@ -61,16 +59,17 @@ async function initializeData() {
       });
 
       if (data.gradYear) years.add(data.gradYear);
-      if (data.sport) sports.add(data.sport.toLowerCase());
+      if (data.sport) sportsSet.add(data.sport);
     });
 
     ALL_PLAYERS = players;
 
-    // Build coaches map
     coachSnap.forEach(doc => {
       const data = doc.data();
       if (data.sport) {
-        ALL_COACHES[data.sport.toLowerCase()] = {
+        // Store as normalized key to match filter dropdown
+        const key = data.sport.toLowerCase().replace(/\s+/g, '-');
+        ALL_COACHES[key] = {
           name: data.name,
           title: data.title,
           email: data.email,
@@ -79,18 +78,14 @@ async function initializeData() {
       }
     });
 
-    // Populate filter dropdowns
-    populateFilters(years, sports);
-    
-    console.log(`Loaded ${players.length} players, ${years.size} years, ${sports.size} sports`);
-    
-    // Initial render
+    populateFilters(years, sportsSet);
+
     renderAthletes();
     renderCoaches();
 
   } catch (err) {
     console.error("Error loading data:", err);
-    document.getElementById("athleteContainer").innerHTML = 
+    document.getElementById("athleteContainer").innerHTML =
       `<div class="error">Failed to load data: ${err.message}</div>`;
   }
 }
@@ -98,22 +93,23 @@ async function initializeData() {
 /* ==============================
    Populate Filter Dropdowns
 ============================== */
-function populateFilters(years, sports) {
+function populateFilters(years, sportsSet) {
   const gradSelect = document.getElementById("gradSelect");
   const sportSelect = document.getElementById("sportSelect");
 
-  // Populate grad years
-  const sortedYears = [...years].sort();
+  const sortedYears = [...years].sort((a, b) => a - b);
   gradSelect.innerHTML = sortedYears
     .map(y => `<option value="${y}">Class of ${y}</option>`)
     .join("");
 
-  // Populate sports
-  const sortedSports = [...sports].sort();
-  sportSelect.innerHTML = 
+  const sortedSports = [...sportsSet].sort();
+  sportSelect.innerHTML =
     `<option value="all">All Sports</option>` +
     sortedSports
-      .map(s => `<option value="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</option>`)
+      .map(s => {
+        const val = s.toLowerCase().replace(/\s+/g, '-');
+        return `<option value="${val}">${s}</option>`;
+      })
       .join("");
 }
 
@@ -124,7 +120,6 @@ function renderCoaches() {
   const selectedSport = document.getElementById("sportSelect").value;
   const container = document.getElementById("coachContainer");
 
-  // Filter coaches based on sport selection
   let coachesToShow = [];
   if (selectedSport === "all") {
     coachesToShow = Object.values(ALL_COACHES);
@@ -159,44 +154,42 @@ function renderCoaches() {
 function createPlayerCard(player) {
   const card = document.createElement("div");
   card.className = "player-card";
-  
+
   const stats = [];
-  if (player.position) stats.push({ label: "Position", value: player.position });
-  if (player.height) stats.push({ label: "Height", value: player.height });
-  if (player.weight) stats.push({ label: "Weight", value: `${player.weight} lbs` });
+  if (player.position) stats.push({ label: "Pos", value: player.position });
+  if (player.height) stats.push({ label: "Ht", value: player.height });
+  if (player.weight) stats.push({ label: "Wt", value: `${player.weight} lbs` });
   if (player.gpa) stats.push({ label: "GPA", value: player.gpa });
 
-  let statsHTML = '';
-  if (stats.length > 0) {
-    statsHTML = '<div class="player-stats">';
-    stats.forEach(stat => {
-      statsHTML += `
-        <div class="stat-item">
-          <span class="stat-label">${stat.label}</span>
-          <span class="stat-value">${stat.value}</span>
-        </div>
-      `;
-    });
-    statsHTML += '</div>';
-  }
+  let statsHTML = stats.length > 0 ?
+    `<div class="player-stats">${stats.map(s => `
+      <div class="stat-item">
+        <span class="stat-label">${s.label}</span>
+        <span class="stat-value">${s.value}</span>
+      </div>`).join('')}</div>` : '';
 
   let linksHTML = '';
   if (player.hudl || player.twitter) {
     linksHTML = '<div class="player-links">';
-    if (player.hudl) linksHTML += `<a href="${player.hudl}" target="_blank" rel="noopener noreferrer" class="hudl">🎥 Hudl</a>`;
-    if (player.twitter) linksHTML += `<a href="${player.twitter}" target="_blank" rel="noopener noreferrer" class="twitter">𝕏 Twitter/X</a>`;
+    if (player.hudl) linksHTML += `<a href="${player.hudl}" target="_blank" class="hudl">🎥 Hudl</a>`;
+    if (player.twitter) linksHTML += `<a href="${player.twitter}" target="_blank" class="twitter">𝕏 Twitter</a>`;
     linksHTML += '</div>';
   }
 
+  // Use the Blue/Gold Roo color scheme for placeholder
+  const placeholder = 'https://via.placeholder.com/300x280/0033a0/ffffff?text=No+Photo';
+
   card.innerHTML = `
-    <img class="player-photo" 
-         src="${player.photoUrl || 'https://via.placeholder.com/300x280/4169E1/ffffff?text=No+Photo'}" 
-         alt="${player.name || 'Athlete'}"
-         loading="lazy"
-         onerror="this.src='https://via.placeholder.com/300x280/4169E1/ffffff?text=No+Photo'">
+    <div class="photo-wrapper" style="height:280px; overflow:hidden; background:#eee;">
+      <img class="player-photo" 
+           src="${player.photoUrl || placeholder}" 
+           alt="${player.name}"
+           style="width:100%; height:100%; object-fit:cover; object-position:top;"
+           onerror="this.onerror=null;this.src='${placeholder}';">
+    </div>
     <div class="card-content">
       <h3>
-        <span>${player.name || 'Unknown Athlete'}</span>
+        <span>${player.name || 'Athlete'}</span>
         ${player.jersey ? `<span class="jersey">#${player.jersey}</span>` : ''}
       </h3>
       ${player.sport ? `<div class="sport-badge">${player.sport}</div>` : ''}
@@ -204,7 +197,7 @@ function createPlayerCard(player) {
       ${linksHTML}
     </div>
   `;
-  
+
   return card;
 }
 
@@ -213,7 +206,7 @@ function createPlayerCard(player) {
 ============================== */
 function renderAthletes() {
   const gradYearStr = document.getElementById("gradSelect").value;
-  const sport = document.getElementById("sportSelect").value;
+  const selectedSportVal = document.getElementById("sportSelect").value;
   const container = document.getElementById("athleteContainer");
 
   if (!gradYearStr) {
@@ -221,34 +214,26 @@ function renderAthletes() {
     return;
   }
 
-  // Filter players
   const filtered = ALL_PLAYERS.filter(p => {
     const gradMatch = p.gradYear == gradYearStr;
-    const sportMatch = sport === "all" || p.sport?.toLowerCase() === sport;
+    // Normalize athlete sport to match dropdown value (e.g., "Track & Field" -> "track-and-field")
+    const normalizedSport = (p.sport || "").toLowerCase().replace(/\s+/g, '-');
+    const sportMatch = selectedSportVal === "all" || normalizedSport === selectedSportVal;
     return gradMatch && sportMatch;
   });
 
-  // Handle empty results
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="no-data">
         <h3>No Athletes Found</h3>
-        <p>No athletes found for Class of ${gradYearStr} ${sport === 'all' ? '' : '- ' + sport}</p>
-      </div>
-    `;
+        <p>No athletes found for Class of ${gradYearStr}</p>
+      </div>`;
     return;
   }
 
-  // Sort by name
   filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-  // Render cards
   container.innerHTML = "";
-  filtered.forEach(player => {
-    container.appendChild(createPlayerCard(player));
-  });
-
-  console.log(`Rendered ${filtered.length} athletes`);
+  filtered.forEach(player => container.appendChild(createPlayerCard(player)));
 }
 
 /* ==============================
@@ -256,24 +241,19 @@ function renderAthletes() {
 ============================== */
 (async function init() {
   try {
-    // Load all data once
     await initializeData();
 
-    // Set up event listeners
     document.getElementById("gradSelect").addEventListener("change", () => {
       renderAthletes();
       renderCoaches();
     });
-    
+
     document.getElementById("sportSelect").addEventListener("change", () => {
       renderAthletes();
       renderCoaches();
     });
-    
-    console.log("App initialized successfully");
+
   } catch (err) {
     console.error("Initialization error:", err);
-    document.getElementById("athleteContainer").innerHTML = 
-      `<div class="error">Failed to initialize application: ${err.message}</div>`;
   }
 })();
