@@ -26,29 +26,24 @@ const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS"
  * Handles full gs:// links and missing file extensions
  */
 async function getImageUrl(path) {
+  // 1. If empty
   if (!path || path === "") return PLACEHOLDER;
+  
+  // 2. If it's already a full web URL (which Apps Script now provides)
   if (path.startsWith('http')) return path;
 
-  // Clean the Firestore path string
-  let cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
-  
+  // 3. Fallback for old 'gs://' paths
   try {
-    // Attempt 1: As provided
-    return await getDownloadURL(ref(storage, cleanPath));
+    let cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
+    // If no extension exists in the string, assume .jpg
+    if (!cleanPath.includes('.')) cleanPath += '.jpg';
+    
+    const imageRef = ref(storage, cleanPath);
+    return await getDownloadURL(imageRef);
   } catch (err) {
-    // Attempt 2: Auto-append .jpg if extension is missing
-    if (!cleanPath.includes('.')) {
-      try {
-        return await getDownloadURL(ref(storage, cleanPath + ".jpg"));
-      } catch (e) {
-        console.warn("Image not found after retry:", cleanPath);
-        return PLACEHOLDER;
-      }
-    }
     return PLACEHOLDER;
   }
 }
-
 async function initializeData() {
   try {
     const [athleteSnap, coachSnap] = await Promise.all([
@@ -136,26 +131,36 @@ async function renderContent() {
     `;
   }
 
-  // 2. Render Coaches
-  const filteredCoaches = ALL_COACHES.filter(c => 
-    selectedSport === "all" || c.sport === selectedSport
-  );
+ // 2. Render Coaches
+const filteredCoaches = ALL_COACHES.filter(c => 
+  selectedSport === "all" || c.sport === selectedSport
+);
 
-  if (filteredCoaches.length > 0) {
-    coachContainer.innerHTML = `<h2 style="margin:20px 0; color:var(--royal-blue); font-weight:900; text-transform:uppercase;">Coaching Staff</h2>`;
-    filteredCoaches.forEach(c => {
-      coachContainer.innerHTML += `
-        <div class="coach-card">
-          <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
-          <h3 style="font-size:1.2rem; margin-bottom:5px;">${c.name}</h3>
-          <div style="font-size:0.85rem; color:var(--dark-gray); margin-bottom:12px;">${c.title || ''}</div>
-          <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
+if (filteredCoaches.length > 0) {
+  // Clear container and add the Heading (spanning the whole top)
+  coachContainer.innerHTML = `
+    <h2 style="grid-column: 1 / -1; margin: 20px 0; color: var(--royal-blue); font-weight: 900; text-transform: uppercase;">
+      Coaching Staff
+    </h2>
+  `;
+
+  // Create the Coach Cards and append them
+  filteredCoaches.forEach(c => {
+    coachContainer.innerHTML += `
+      <div class="coach-card">
+        <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 5px;">${c.name}</h3>
+        <div style="font-size: 0.85rem; color: var(--dark-gray); margin-bottom: 12px; font-weight: 600;">
+          ${c.title || ''}
         </div>
-      `;
-    });
-  } else {
-    coachContainer.innerHTML = "";
-  }
+        <a href="mailto:${c.email}" class="coach-email-link" style="text-decoration: none; font-weight: 700; color: var(--royal-blue); border: 1px solid var(--royal-blue); padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem;">
+          ${c.email}
+        </a>
+      </div>
+    `;
+  });
+} else {
+  coachContainer.innerHTML = "";
 }
 
 // Start
