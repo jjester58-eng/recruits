@@ -19,17 +19,22 @@ const storage = getStorage(app);
 let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 
-// Generic placeholder so the Roo Logo stays ONLY in the header
-const PLACEHOLDER = "https://via.placeholder.com/400x500?text=No+Photo";
+// Fixed placeholder URL
+const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=Photo+Coming+Soon";
 
 async function getImageUrl(path) {
   if (!path || path === "") return PLACEHOLDER;
   if (path.startsWith('http')) return path;
+
   try {
-    const cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
+    // Strips the gs:// prefix and the bucket name to get the internal path
+    let cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
+    
+    // Ensure we are hitting the folder correctly
     const imageRef = ref(storage, cleanPath);
     return await getDownloadURL(imageRef);
   } catch (err) {
+    console.warn("Could not find image at:", path);
     return PLACEHOLDER;
   }
 }
@@ -46,7 +51,11 @@ async function initializeData() {
 
     athleteSnap.forEach(doc => {
       const data = doc.data();
-      ALL_PLAYERS.push({ id: doc.id, ...data, photoUrl: data.photoUrl || data.photoURL || '' });
+      ALL_PLAYERS.push({ 
+        id: doc.id, 
+        ...data, 
+        photoUrl: data.photoUrl || data.photoURL || '' 
+      });
       if (data.gradYear) years.add(data.gradYear);
       if (data.sport) sportsSet.add(data.sport);
     });
@@ -56,7 +65,14 @@ async function initializeData() {
     populateFilters(years, sportsSet);
     await renderAthletes();
     renderCoaches();
-  } catch (err) { console.error(err); }
+
+    // Hide the loading spinner
+    const loader = document.getElementById('loadingOverlay');
+    if(loader) loader.style.display = 'none';
+
+  } catch (err) {
+    console.error("Init Error:", err);
+  }
 }
 
 function populateFilters(years, sportsSet) {
@@ -77,14 +93,14 @@ function renderCoaches() {
   if (filtered.length === 0) { container.innerHTML = ""; return; }
 
   container.innerHTML = `
-    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800; text-transform:uppercase; letter-spacing:1px;">Coaching Staff</h2>
+    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800; text-transform:uppercase;">Coaching Staff</h2>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
       ${filtered.map(c => `
-        <div class="coach-card" style="background:white; padding:20px; border-radius:12px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-          <div style="font-size:0.7rem; font-weight:900; color:var(--royal-blue); text-transform:uppercase; margin-bottom:5px;">${(c.sport || '').toUpperCase()}</div>
-          <h3 style="font-size:1.1rem; margin-bottom:5px; color:var(--black);">${c.name}</h3>
+        <div class="coach-card">
+          <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
+          <h3 style="font-size:1.1rem; margin-bottom:5px;">${c.name}</h3>
           <div style="font-size:0.8rem; color:var(--dark-gray); margin-bottom:10px;">${c.title || ''}</div>
-          <a href="mailto:${c.email}" style="font-size:0.85rem; text-decoration:none; color:var(--light-blue); font-weight:600; word-break:break-all;">${c.email}</a>
+          <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
         </div>
       `).join("")}
     </div>
@@ -98,7 +114,7 @@ async function createPlayerCard(player) {
 
   card.innerHTML = `
     <div class="photo-wrapper">
-      <img class="player-photo" src="${finalImgUrl}" alt="${player.name}">
+      <img class="player-photo" src="${finalImgUrl}" alt="${player.name}" onerror="this.src='${PLACEHOLDER}'">
     </div>
     <div class="card-content">
       <span class="sport-badge">${player.sport}</span>
@@ -125,6 +141,7 @@ async function renderAthletes() {
   const selectedSport = document.getElementById("sportSelect").value;
   const container = document.getElementById("athleteContainer");
   const filtered = ALL_PLAYERS.filter(p => p.gradYear == gradYear && (selectedSport === "all" || p.sport === selectedSport));
+  
   container.innerHTML = "";
   for (const p of filtered) {
     const card = await createPlayerCard(p);

@@ -241,4 +241,40 @@ header {
     flex-direction: column;
     align-items: stretch;
   }
+  /* Better Depth for Cards */
+.player-card {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.player-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 14px 28px rgba(0,51,160,0.25), 0 10px 10px rgba(0,51,160,0.22);
+}
+
+/* Coach Card specific styling */
+.coach-card {
+  background: white; 
+  padding: 20px; 
+  border-radius: 12px; 
+  border: 1px solid #eee; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.coach-sport-tag {
+  font-size: 0.7rem; 
+  font-weight: 900; 
+  color: var(--royal-blue); 
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+}
+
+.coach-email-link {
+  font-size: 0.85rem; 
+  text-decoration: none; 
+  color: var(--light-blue); 
+  font-weight: 600; 
+  word-break: break-all;
+}
 }
