@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
 /* ==============================
    Firebase Configuration
@@ -16,15 +17,40 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 /* ==============================
-   Global Data Storage
+   Global Data Storage & Constants
 ============================== */
 let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 
-// Fallback image if the URL is broken or missing
+// Fallback image (Weatherford Logo) for header only logic is handled via index.html
+// This is used for profile cards ONLY when no specific photo exists.
 const PLACEHOLDER_IMG = 'https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png';
+
+/* ==============================
+   Helper: Fetch Real Image URL
+============================== */
+async function getImageUrl(path) {
+  if (!path || path === "" || path === PLACEHOLDER_IMG) return PLACEHOLDER_IMG;
+  
+  // If the path is a Firebase Storage reference (gs://)
+  if (path.startsWith('gs://') || (!path.startsWith('http') && path.length > 5)) {
+    try {
+      // Clean path if it includes the full gs:// bucket prefix
+      const cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
+      const imageRef = ref(storage, cleanPath);
+      return await getDownloadURL(imageRef);
+    } catch (err) {
+      console.warn("Could not find image in storage, using placeholder:", path);
+      return PLACEHOLDER_IMG;
+    }
+  }
+  
+  // If it's already a public https URL
+  return path;
+}
 
 /* ==============================
    Load All Data
@@ -45,7 +71,6 @@ async function initializeData() {
         id: doc.id,
         name: data.name || 'Athlete',
         gradYear: data.gradYear,
-        // RESOLUTION: Checks both photoUrl and photoURL
         photoUrl: data.photoUrl || data.photoURL || '',
         sport: data.sport || '',
         position: data.pos || data.position || '',
@@ -70,8 +95,9 @@ async function initializeData() {
     });
 
     populateFilters(years, sportsSet);
-    renderAthletes();
-    renderCoaches();
+    // Initial render
+    await renderAthletes();
+    await renderCoaches();
 
   } catch (err) {
     console.error("Error loading data:", err);
@@ -91,9 +117,9 @@ function populateFilters(years, sportsSet) {
 }
 
 /* ==============================
-   Render Coaches (Grid)
+   Render Coaches
 ============================== */
-function renderCoaches() {
+async function renderCoaches() {
   const container = document.getElementById('coachContainer');
   const selectedSport = document.getElementById("sportSelect").value;
 
@@ -106,38 +132,41 @@ function renderCoaches() {
     return;
   }
 
-  container.innerHTML = `
-    <h2 style="margin:20px 0; color:var(--royal-blue); font-weight:800;">Coaching Staff</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-      ${filtered.map(c => `
-        <div class="coach-card" style="background:white; padding:15px; border-radius:12px; text-align:center; box-shadow:var(--shadow);">
-          <img src="${c.photoUrl || PLACEHOLDER_IMG}" 
-               onerror="this.src='${PLACEHOLDER_IMG}'"
-               style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
-          <h3 style="font-size:1rem; margin-bottom:5px;">${c.name}</h3>
-          <div style="font-size:0.8rem; font-weight:700; color:var(--royal-blue);">${c.sport}</div>
-          <div style="font-size:0.75rem; color:var(--dark-gray); margin-bottom:8px;">${c.title}</div>
-          <a href="mailto:${c.email}" style="font-size:0.75rem; text-decoration:none; color:var(--royal-blue); font-weight:600;">Email Coach</a>
-        </div>
-      `).join("")}
-    </div>
-  `;
+  // Build header
+  container.innerHTML = `<h2 style="margin:20px 0; color:#0033a0; font-weight:800;">Coaching Staff</h2>`;
+  const grid = document.createElement('div');
+  grid.style.cssText = "display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;";
+
+  for (const c of filtered) {
+    const finalImg = await getImageUrl(c.photoUrl);
+    grid.innerHTML += `
+      <div class="coach-card" style="background:white; padding:15px; border-radius:12px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <img src="${finalImg}" 
+             onerror="this.src='${PLACEHOLDER_IMG}'"
+             style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
+        <h3 style="font-size:1rem; margin-bottom:5px;">${c.name}</h3>
+        <div style="font-size:0.8rem; font-weight:700; color:#0033a0;">${c.sport}</div>
+        <div style="font-size:0.75rem; color:#666; margin-bottom:8px;">${c.title || ''}</div>
+        <a href="mailto:${c.email}" style="font-size:0.75rem; text-decoration:none; color:#0033a0; font-weight:600;">Email Coach</a>
+      </div>
+    `;
+  }
+  container.appendChild(grid);
 }
 
 /* ==============================
-   Create Player Card
+   Render Athletes
 ============================== */
-function createPlayerCard(player) {
+async function createPlayerCard(player) {
   const card = document.createElement("div");
   card.className = "player-card";
 
-  // Use the school logo if no photo is available
-  const imgToUse = player.photoUrl && player.photoUrl !== "" ? player.photoUrl : PLACEHOLDER_IMG;
+  const finalImgUrl = await getImageUrl(player.photoUrl);
 
   card.innerHTML = `
     <div class="photo-wrapper">
       <img class="player-photo" 
-           src="${imgToUse}" 
+           src="${finalImgUrl}" 
            alt="${player.name}"
            onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}';">
     </div>
@@ -161,7 +190,7 @@ function createPlayerCard(player) {
   return card;
 }
 
-function renderAthletes() {
+async function renderAthletes() {
   const gradYear = document.getElementById("gradSelect").value;
   const selectedSport = document.getElementById("sportSelect").value;
   const container = document.getElementById("athleteContainer");
@@ -179,15 +208,25 @@ function renderAthletes() {
   }
 
   filtered.sort((a, b) => a.name.localeCompare(b.name));
-  filtered.forEach(p => container.appendChild(createPlayerCard(p)));
+  
+  for (const p of filtered) {
+    const card = await createPlayerCard(p);
+    container.appendChild(card);
+  }
 }
 
 /* ==============================
-   Initialization
+   Initialization & Events
 ============================== */
 (async function init() {
   await initializeData();
 
-  document.getElementById("gradSelect").addEventListener("change", () => { renderAthletes(); renderCoaches(); });
-  document.getElementById("sportSelect").addEventListener("change", () => { renderAthletes(); renderCoaches(); });
+  const handleFilterChange = async () => {
+    // Show a small loading state if needed
+    await renderAthletes();
+    await renderCoaches();
+  };
+
+  document.getElementById("gradSelect").addEventListener("change", handleFilterChange);
+  document.getElementById("sportSelect").addEventListener("change", handleFilterChange);
 })();
