@@ -20,11 +20,44 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
-window.expandImage = (src) => {
+// Updated to show performance metrics modal instead of just image
+window.expandImage = (playerData) => {
   const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImg");
+  const modalContent = document.getElementById("modalContent");
+
+  // Build performance metrics HTML (only show if data exists)
+  let metricsHTML = '';
+
+  if (playerData.bench || playerData.squat || playerData.powerClean || playerData.vertical ||
+    playerData.proAgility || playerData.satAct || playerData.recruiterNotes) {
+    metricsHTML = '<div class="metrics-section">';
+
+    if (playerData.bench) metricsHTML += `<div class="metric-item"><span class="metric-label">Bench Press:</span> <span class="metric-value">${playerData.bench} lbs</span></div>`;
+    if (playerData.squat) metricsHTML += `<div class="metric-item"><span class="metric-label">Squat:</span> <span class="metric-value">${playerData.squat} lbs</span></div>`;
+    if (playerData.powerClean) metricsHTML += `<div class="metric-item"><span class="metric-label">Power Clean:</span> <span class="metric-value">${playerData.powerClean} lbs</span></div>`;
+    if (playerData.vertical) metricsHTML += `<div class="metric-item"><span class="metric-label">Vertical Jump:</span> <span class="metric-value">${playerData.vertical}"</span></div>`;
+    if (playerData.proAgility) metricsHTML += `<div class="metric-item"><span class="metric-label">Pro Agility:</span> <span class="metric-value">${playerData.proAgility}s</span></div>`;
+    if (playerData.satAct) metricsHTML += `<div class="metric-item"><span class="metric-label">SAT/ACT:</span> <span class="metric-value">${playerData.satAct}</span></div>`;
+    if (playerData.recruiterNotes) metricsHTML += `<div class="metric-item notes"><span class="metric-label">Recruiter Notes:</span> <span class="metric-value">${playerData.recruiterNotes}</span></div>`;
+
+    metricsHTML += '</div>';
+  } else {
+    metricsHTML = '<p style="text-align:center; color:#666; padding:20px;">No additional performance metrics available.</p>';
+  }
+
+  modalContent.innerHTML = `
+    <div class="modal-player-header">
+      <img src="${playerData.photoUrl}" alt="${playerData.name}" class="modal-player-photo">
+      <div class="modal-player-info">
+        <h2>${playerData.name} <span class="modal-jersey">${playerData.jersey ? '#' + playerData.jersey : ''}</span></h2>
+        <p class="modal-sport">${playerData.sport} • Class of ${playerData.gradYear}</p>
+      </div>
+    </div>
+    <h3 style="color: #0033a0; margin: 20px 0 15px; font-size: 1.2rem;">Performance Metrics</h3>
+    ${metricsHTML}
+  `;
+
   modal.style.display = "flex";
-  modalImg.src = src;
 };
 
 async function getImageUrl(path) {
@@ -136,27 +169,46 @@ async function renderContent() {
   athleteContainer.innerHTML = "";
   const cards = await Promise.all(filteredAthletes.map(async (p) => {
     const img = await getImageUrl(p.photoUrl || p.photoURL);
-    // Fix: Use ht/wt fields from Firebase, format height properly
     const heightDisplay = p.ht || p.height || '-';
     const weightDisplay = p.wt || p.weight || '-';
+    const position = p.position || p.pos || '-';
+
+    // Create a data object to pass to modal
+    const playerDataJson = JSON.stringify({
+      name: p.name,
+      sport: p.sport,
+      gradYear: p.gradYear,
+      jersey: p.jersey,
+      photoUrl: img,
+      bench: p.bench || '',
+      squat: p.squat || '',
+      powerClean: p.powerClean || '',
+      vertical: p.vertical || '',
+      proAgility: p.proAgility || '',
+      satAct: p.satAct || '',
+      recruiterNotes: p.recruiterNotes || ''
+    }).replace(/"/g, '&quot;');
 
     return `
       <div class="player-card">
-        <div class="photo-wrapper" onclick="expandImage('${img}')">
+        <div class="photo-wrapper" onclick='expandImage(${playerDataJson})'>
           <img class="player-photo" src="${img}" alt="${p.name}" loading="lazy">
+          <div class="photo-overlay">
+            <span class="view-stats">📊 View Stats</span>
+          </div>
         </div>
         <div class="card-content">
           <span class="sport-badge">${p.sport}</span>
           <h3><span>${p.name}</span> <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span></h3>
-          <div class="player-stats">
-            <div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${p.position || p.pos || '-'}</span></div>
-            <div class="stat-item"><span class="stat-label">HT/WT</span><span class="stat-value">${heightDisplay}/${weightDisplay}</span></div>
-            <div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${p.gpa || '-'}</span></div>
+          <div class="player-info-grid">
+            <div class="info-item"><span class="info-label">Class:</span> <span class="info-value">${p.gradYear || '-'}</span></div>
+            <div class="info-item"><span class="info-label">Height:</span> <span class="info-value">${heightDisplay}</span></div>
+            <div class="info-item"><span class="info-label">Weight:</span> <span class="info-value">${weightDisplay}</span></div>
+            <div class="info-item"><span class="info-label">Position:</span> <span class="info-value">${position}</span></div>
+            <div class="info-item"><span class="info-label">Jersey:</span> <span class="info-value">${p.jersey || '-'}</span></div>
+            <div class="info-item"><span class="info-label">GPA:</span> <span class="info-value">${p.gpa || '-'}</span></div>
           </div>
-          <div class="player-links">
-            ${p.hudl ? `<a href="${p.hudl}" target="_blank" class="hudl">HUDL</a>` : ''}
-            ${p.twitter ? `<a href="https://twitter.com/${p.twitter.replace('@', '')}" target="_blank" class="twitter">TWITTER</a>` : ''}
-          </div>
+          ${p.hudl ? `<a href="${p.hudl}" target="_blank" class="hudl-link">🎥 HUDL Highlights</a>` : ''}
         </div>
       </div>`;
   }));
@@ -167,3 +219,10 @@ initializeData();
 document.getElementById("gradSelect").addEventListener("change", renderContent);
 document.getElementById("sportSelect").addEventListener("change", renderContent);
 document.getElementById("nameSearch").addEventListener("input", renderContent);
+
+// Close modal when clicking outside content
+document.getElementById("imageModal").addEventListener("click", function (e) {
+  if (e.target === this) {
+    this.style.display = "none";
+  }
+});
