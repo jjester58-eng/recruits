@@ -20,197 +20,215 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
-window.expandImage = (src) => {
+window.expandImage = (player) => {
   const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImg");
+  const modalContent = document.getElementById("modalContent");
+
+  let metricsHTML = '';
+
+  const hasData = player.bench || player.squat || player.powerClean || player.vertical ||
+                  player.proAgility || player.satAct || player.recruiterNotes;
+
+  if (hasData) {
+    metricsHTML = '<div class="metrics-section">';
+    if (player.bench)        metricsHTML += `<div class="metric-item"><span class="metric-label">Bench Press</span><span class="metric-value">${player.bench}</span></div>`;
+    if (player.squat)        metricsHTML += `<div class="metric-item"><span class="metric-label">Squat</span><span class="metric-value">${player.squat}</span></div>`;
+    if (player.powerClean)   metricsHTML += `<div class="metric-item"><span class="metric-label">Power Clean</span><span class="metric-value">${player.powerClean}</span></div>`;
+    if (player.vertical)     metricsHTML += `<div class="metric-item"><span class="metric-label">Vertical Jump</span><span class="metric-value">${player.vertical}</span></div>`;
+    if (player.proAgility)   metricsHTML += `<div class="metric-item"><span class="metric-label">Pro Agility</span><span class="metric-value">${player.proAgility}</span></div>`;
+    if (player.satAct)       metricsHTML += `<div class="metric-item"><span class="metric-label">SAT/ACT</span><span class="metric-value">${player.satAct}</span></div>`;
+    if (player.recruiterNotes) metricsHTML += `<div class="metric-item notes"><span class="metric-label">Recruiter Notes</span><span class="metric-value">${player.recruiterNotes}</span></div>`;
+    metricsHTML += '</div>';
+  } else {
+    metricsHTML = '<p style="text-align:center; color:#777; font-style:italic; padding:20px 0;">No performance metrics or notes available.</p>';
+  }
+
+  modalContent.innerHTML = `
+    <div class="modal-player-header">
+      <img src="${player.img}" alt="${player.name}" class="modal-player-photo">
+      <div class="modal-player-info">
+        <h2>${player.name} <span class="modal-jersey">${player.jersey ? '#' + player.jersey : ''}</span></h2>
+        <p class="modal-sport">${player.sport} • Class of ${player.gradYear}</p>
+      </div>
+    </div>
+    <h3>Performance Metrics</h3>
+    ${metricsHTML}
+  `;
+
   modal.style.display = "flex";
-  modalImg.src = src;
 };
 
 async function getImageUrl(path) {
-  if (!path || path === "") return PLACEHOLDER;
+  if (!path) return PLACEHOLDER;
   if (path.startsWith('http')) return path;
   try {
     let cleanPath = path.replace('gs://roosports-117c3.firebasestorage.app/', '');
     if (!cleanPath.includes('.')) cleanPath += '.jpg';
-    const imageRef = ref(storage, cleanPath);
-    return await getDownloadURL(imageRef);
-  } catch (err) {
-    console.warn("Image fetch failed:", err);
+    return await getDownloadURL(ref(storage, cleanPath));
+  } catch {
     return PLACEHOLDER;
   }
 }
 
 async function initializeData() {
   try {
-    const [athleteSnap, coachSnap] = await Promise.all([
+    const [athletesSnap, coachesSnap] = await Promise.all([
       getDocs(collection(db, "athletes")),
       getDocs(collection(db, "coaches"))
     ]);
 
     const years = new Set();
-    const sportsSet = new Set();
+    const sports = new Set();
 
-    athleteSnap.forEach(doc => {
-      const data = doc.data();
-      ALL_PLAYERS.push({ id: doc.id, ...data });
-      if (data.gradYear) years.add(data.gradYear);
-      if (data.sport) sportsSet.add(data.sport);
+    athletesSnap.forEach(doc => {
+      const d = doc.data();
+      ALL_PLAYERS.push({ id: doc.id, ...d });
+      if (d.gradYear) years.add(d.gradYear);
+      if (d.sport) sports.add(d.sport);
     });
 
-    coachSnap.forEach(doc => {
-      ALL_COACHES.push({ id: doc.id, ...doc.data() });
-    });
+    coachesSnap.forEach(doc => ALL_COACHES.push({ id: doc.id, ...doc.data() }));
 
-    populateFilters(years, sportsSet);
+    // Populate filters
+    const gradSelect = document.getElementById("gradSelect");
+    gradSelect.innerHTML = [...years].sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join("");
+
+    const sportSelect = document.getElementById("sportSelect");
+    sportSelect.innerHTML = `<option value="all">All Sports (Coaches Only)</option>` +
+      [...sports].sort().map(s => `<option value="${s}">${s}</option>`).join("");
+
     await renderContent();
-
-    const loading = document.getElementById('loadingOverlay');
-    if (loading) loading.style.display = 'none';
+    document.getElementById("loadingOverlay").style.display = "none";
   } catch (err) {
     console.error("Data load error:", err);
   }
 }
 
-function populateFilters(years, sportsSet) {
-  const gradSelect = document.getElementById("gradSelect");
-  const sportSelect = document.getElementById("sportSelect");
-
-  const sortedYears = [...years].sort((a, b) => b - a);
-  gradSelect.innerHTML = '<option value="">Select Year</option>' +
-    sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
-
-  const sortedSports = [...sportsSet].sort();
-  sportSelect.innerHTML = `<option value="all">All Sports (Coaches Only)</option>` +
-    sortedSports.map(s => `<option value="${s}">${s}</option>`).join("");
-}
+const norm = s => (s || "").trim().toLowerCase();
 
 async function renderContent() {
-  const gradYear = document.getElementById("gradSelect").value;
-  const selectedSport = document.getElementById("sportSelect").value;
-  const searchTerm = document.getElementById("nameSearch").value.toLowerCase().trim();
+  const grad = document.getElementById("gradSelect").value;
+  const sport = document.getElementById("sportSelect").value;
+  const search = document.getElementById("nameSearch").value.trim().toLowerCase();
 
-  const athleteContainer = document.getElementById("athleteContainer");
-  const coachContainer = document.getElementById("coachContainer");
+  const coachCont = document.getElementById("coachContainer");
+  const athleteCont = document.getElementById("athleteContainer");
 
-  const normalize = (str) => (str || "").toString().trim().toLowerCase();
+  // Coaches
+  let coachHtml = "";
 
-  // ── COACHES ────────────────────────────────────────────────
-  let coachHTML = "";
-
-  if (selectedSport === "all") {
-    const filteredCoaches = ALL_COACHES.filter(c =>
-      (c.name || "").toLowerCase().includes(searchTerm)
-    );
-
-    if (filteredCoaches.length > 0) {
-      coachHTML = `<h2 class="section-title">Coaching Staff</h2>` +
-        filteredCoaches.map(c => `
+  if (sport === "all") {
+    const filtered = ALL_COACHES.filter(c => (c.name||"").toLowerCase().includes(search));
+    if (filtered.length) {
+      coachHtml = `<h2 class="section-title">Coaching Staff</h2>` +
+        filtered.map(c => `
           <div class="coach-card">
             <div>
-              <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
-              <h3>${c.name}</h3>
-              <div class="coach-title">${c.title || ''}</div>
+              <div class="coach-sport-tag">${(c.sport||"").toUpperCase()}</div>
+              <h3>${c.name||""}</h3>
+              <div class="coach-title">${c.title||""}</div>
             </div>
-            <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
+            <a href="mailto:${c.email}" class="coach-email-link">${c.email||""}</a>
           </div>
         `).join("");
     }
   } else {
-    // Show head coach for the selected sport
-    const headCoach = ALL_COACHES.find(c =>
-      normalize(c.sport) === normalize(selectedSport) &&
-      /(head|hc)/i.test(c.title || '')
-    );
-
-    if (headCoach) {
-      coachHTML = `
-        <h2 class="section-title">Head Coach • ${selectedSport}</h2>
+    const head = ALL_COACHES.find(c => norm(c.sport) === norm(sport) && /head|hc/i.test(c.title||""));
+    if (head) {
+      coachHtml = `
+        <h2 class="section-title">Head Coach – ${sport}</h2>
         <div class="coach-card head-coach-card">
           <div>
-            <div class="coach-sport-tag">${(headCoach.sport || '').toUpperCase()}</div>
-            <h3>${headCoach.name}</h3>
-            <div class="coach-title">${headCoach.title || 'Head Coach'}</div>
+            <div class="coach-sport-tag">${(head.sport||"").toUpperCase()}</div>
+            <h3>${head.name||""}</h3>
+            <div class="coach-title">${head.title||"Head Coach"}</div>
           </div>
-          <a href="mailto:${headCoach.email}" class="coach-email-link">${headCoach.email}</a>
-        </div>`;
+          <a href="mailto:${head.email}" class="coach-email-link">${head.email||""}</a>
+        </div>
+      `;
     } else {
-      coachHTML = `<div style="padding:30px; text-align:center; background:#f8f9fa; border-radius:12px; color:#555;">
-        No head coach found for <strong>${selectedSport}</strong>
-      </div>`;
+      coachHtml = `<p style="text-align:center; padding:30px; color:#666;">No head coach found for ${sport}</p>`;
     }
   }
 
-  coachContainer.innerHTML = coachHTML;
+  coachCont.innerHTML = coachHtml;
 
-  // ── ATHLETES ───────────────────────────────────────────────
-  if (selectedSport === "all") {
-    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--dark-gray); border: 2px dashed var(--medium-gray); border-radius:12px;">
-      Select a specific sport to view athletes.
+  // Athletes
+  if (sport === "all") {
+    athleteCont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dark-gray);border:2px dashed var(--medium-gray);border-radius:12px;">
+      Select a sport to view athletes
     </div>`;
     return;
   }
 
-  if (!gradYear) {
-    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:#666;">
-      Please select a class year.
-    </div>`;
+  if (!grad) {
+    athleteCont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#666;">Select a class year</div>`;
     return;
   }
 
-  const filteredAthletes = ALL_PLAYERS.filter(p =>
-    String(p.gradYear) === String(gradYear) &&
-    normalize(p.sport) === normalize(selectedSport) &&
-    (p.name || "").toLowerCase().includes(searchTerm)
+  const athletes = ALL_PLAYERS.filter(p =>
+    String(p.gradYear) === grad &&
+    norm(p.sport) === norm(sport) &&
+    (p.name||"").toLowerCase().includes(search)
   );
 
-  const cards = await Promise.all(filteredAthletes.map(async (p) => {
-    const img = await getImageUrl(p.photoUrl || '');
+  const cards = await Promise.all(athletes.map(async p => {
+    const img = await getImageUrl(p.photoUrl);
 
-    const stats = [];
-
-    if (p.pos) stats.push(`<div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${p.pos}</span></div>`);
-    if (p.ht || p.wt) {
-      const val = [p.ht, p.wt].filter(Boolean).join('/');
-      if (val) stats.push(`<div class="stat-item"><span class="stat-label">HT/WT</span><span class="stat-value">${val}</span></div>`);
-    }
-    if (p.gpa) stats.push(`<div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${p.gpa}</span></div>`);
-    if (p.bench) stats.push(`<div class="stat-item"><span class="stat-label">BENCH</span><span class="stat-value">${p.bench}</span></div>`);
-    if (p.squat) stats.push(`<div class="stat-item"><span class="stat-label">SQUAT</span><span class="stat-value">${p.squat}</span></div>`);
-    if (p.proAgility) stats.push(`<div class="stat-item"><span class="stat-label">PRO AG</span><span class="stat-value">${p.proAgility}</span></div>`);
-    if (p.vertical) stats.push(`<div class="stat-item"><span class="stat-label">VERT</span><span class="stat-value">${p.vertical}</span></div>`);
-    if (p.satAct && p.satAct.trim() && p.satAct !== 'x') {
-      stats.push(`<div class="stat-item"><span class="stat-label">SAT/ACT</span><span class="stat-value">${p.satAct}</span></div>`);
-    }
+    const playerData = {
+      name: p.name || "",
+      sport: p.sport || "",
+      gradYear: p.gradYear || "",
+      jersey: p.jersey || "",
+      img,
+      bench: p.bench || "",
+      squat: p.squat || "",
+      powerClean: p.powerClean || "",
+      vertical: p.vertical || "",
+      proAgility: p.proAgility || "",
+      satAct: p.satAct || "",
+      recruiterNotes: p.recruiterNotes || ""
+    };
 
     return `
       <div class="player-card">
-        <div class="photo-wrapper" onclick="expandImage('${img}')">
+        <div class="photo-wrapper" onclick='expandImage(${JSON.stringify(playerData)})'>
           <img class="player-photo" src="${img}" alt="${p.name || 'Athlete'}" loading="lazy">
+          <div class="photo-overlay">
+            <span class="view-stats">View Stats</span>
+          </div>
         </div>
         <div class="card-content">
-          <span class="sport-badge">${p.sport || 'Unknown'}</span>
-          <h3><span>${p.name || 'Unnamed'}</span> <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span></h3>
-          <div class="player-stats">
-            ${stats.length > 0 ? stats.join('') : '<div class="stat-item"><span>No stats listed</span></div>'}
+          <span class="sport-badge">${p.sport || ""}</span>
+          <h3>
+            <span>${p.name || ""}</span>
+            <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span>
+          </h3>
+          <div class="player-info-grid">
+            <div class="info-item"><span class="info-label">Class:</span><span class="info-value">${p.gradYear || '-'}</span></div>
+            <div class="info-item"><span class="info-label">Height:</span><span class="info-value">${p.ht || '-'}</span></div>
+            <div class="info-item"><span class="info-label">Weight:</span><span class="info-value">${p.wt || '-'}</span></div>
+            <div class="info-item"><span class="info-label">Position:</span><span class="info-value">${p.pos || '-'}</span></div>
+            <div class="info-item"><span class="info-label">Jersey:</span><span class="info-value">${p.jersey || '-'}</span></div>
+            <div class="info-item"><span class="info-label">GPA:</span><span class="info-value">${p.gpa || '-'}</span></div>
           </div>
-          <div class="player-links">
-            ${p.hudl ? `<a href="${p.hudl}" target="_blank" class="hudl">HUDL</a>` : ''}
-            ${p.twitter ? `<a href="https://twitter.com/${p.twitter.replace(/^@/, '')}" target="_blank" class="twitter">TWITTER</a>` : ''}
-          </div>
+          ${p.hudl ? `<a href="${p.hudl}" target="_blank" class="hudl-link">🎥 HUDL Highlights</a>` : ''}
         </div>
-      </div>`;
+      </div>
+    `;
   }));
 
-  athleteContainer.innerHTML = cards.length > 0
-    ? cards.join("")
-    : `<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#666;">
-        No athletes found for this year and sport.
-      </div>`;
+  athleteCont.innerHTML = cards.length ? cards.join("") : 
+    `<div style="grid-column:1/-1;text-align:center;padding:50px;color:#666;">No athletes found</div>`;
 }
 
 initializeData();
 
-document.getElementById("gradSelect")?.addEventListener("change", renderContent);
-document.getElementById("sportSelect")?.addEventListener("change", renderContent);
-document.getElementById("nameSearch")?.addEventListener("input", renderContent);
+["gradSelect", "sportSelect", "nameSearch"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener(id === "nameSearch" ? "input" : "change", renderContent);
+});
+
+document.getElementById("imageModal")?.addEventListener("click", e => {
+  if (e.target === e.currentTarget) e.target.style.display = "none";
+});
