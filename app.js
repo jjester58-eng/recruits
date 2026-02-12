@@ -57,7 +57,7 @@ async function initializeData() {
     coachSnap.forEach(doc => { ALL_COACHES.push(doc.data()); });
     populateFilters(years, sportsSet);
     await renderContent();
-    if(document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none';
+    if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none';
   } catch (err) {
     console.error("Load Error:", err);
   }
@@ -80,24 +80,48 @@ async function renderContent() {
   const athleteContainer = document.getElementById("athleteContainer");
   const coachContainer = document.getElementById("coachContainer");
 
-  // 1. Coaches Logic (Shown by default, filtered by sport if selected)
-  const filteredCoaches = ALL_COACHES.filter(c => 
-    (selectedSport === "all" || c.sport === selectedSport) &&
-    (c.name || "").toLowerCase().includes(searchTerm)
-  );
+  // 1. Coaches Logic - Show when sport is selected (not "all")
+  if (selectedSport !== "all") {
+    const filteredCoaches = ALL_COACHES.filter(c =>
+      c.sport === selectedSport &&
+      (c.name || "").toLowerCase().includes(searchTerm)
+    );
 
-  if (filteredCoaches.length > 0) {
-    coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` + 
-      filteredCoaches.map(c => `
-      <div class="coach-card">
-        <div>
-          <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
-          <h3>${c.name}</h3>
-          <div class="coach-title">${c.title || ''}</div>
-        </div>
-        <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
-      </div>`).join("");
-  } else { coachContainer.innerHTML = ""; }
+    if (filteredCoaches.length > 0) {
+      coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` +
+        filteredCoaches.map(c => `
+        <div class="coach-card">
+          <div>
+            <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
+            <h3>${c.name}</h3>
+            <div class="coach-title">${c.title || ''}</div>
+          </div>
+          <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
+        </div>`).join("");
+    } else {
+      coachContainer.innerHTML = "";
+    }
+  } else {
+    // When "All Sports" is selected, show all coaches
+    const filteredCoaches = ALL_COACHES.filter(c =>
+      (c.name || "").toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredCoaches.length > 0) {
+      coachContainer.innerHTML = `<h2 class="section-title">Coaching Staff</h2>` +
+        filteredCoaches.map(c => `
+        <div class="coach-card">
+          <div>
+            <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
+            <h3>${c.name}</h3>
+            <div class="coach-title">${c.title || ''}</div>
+          </div>
+          <a href="mailto:${c.email}" class="coach-email-link">${c.email}</a>
+        </div>`).join("");
+    } else {
+      coachContainer.innerHTML = "";
+    }
+  }
 
   // 2. Athletes Logic (Hidden until a sport is chosen)
   if (selectedSport === "all") {
@@ -105,13 +129,17 @@ async function renderContent() {
     return;
   }
 
-  const filteredAthletes = ALL_PLAYERS.filter(p => 
+  const filteredAthletes = ALL_PLAYERS.filter(p =>
     p.gradYear == gradYear && p.sport === selectedSport && (p.name || "").toLowerCase().includes(searchTerm)
   );
 
   athleteContainer.innerHTML = "";
   const cards = await Promise.all(filteredAthletes.map(async (p) => {
     const img = await getImageUrl(p.photoUrl || p.photoURL);
+    // Fix: Use ht/wt fields from Firebase, format height properly
+    const heightDisplay = p.ht || p.height || '-';
+    const weightDisplay = p.wt || p.weight || '-';
+
     return `
       <div class="player-card">
         <div class="photo-wrapper" onclick="expandImage('${img}')">
@@ -122,12 +150,12 @@ async function renderContent() {
           <h3><span>${p.name}</span> <span class="jersey">${p.jersey ? '#' + p.jersey : ''}</span></h3>
           <div class="player-stats">
             <div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${p.position || p.pos || '-'}</span></div>
-            <div class="stat-item"><span class="stat-label">HT/WT</span><span class="stat-value">${p.height || '-'}/${p.weight || '-'}</span></div>
+            <div class="stat-item"><span class="stat-label">HT/WT</span><span class="stat-value">${heightDisplay}/${weightDisplay}</span></div>
             <div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${p.gpa || '-'}</span></div>
           </div>
           <div class="player-links">
             ${p.hudl ? `<a href="${p.hudl}" target="_blank" class="hudl">HUDL</a>` : ''}
-            ${p.twitter ? `<a href="${p.twitter}" target="_blank" class="twitter">TWITTER</a>` : ''}
+            ${p.twitter ? `<a href="https://twitter.com/${p.twitter.replace('@', '')}" target="_blank" class="twitter">TWITTER</a>` : ''}
           </div>
         </div>
       </div>`;
