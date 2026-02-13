@@ -361,7 +361,7 @@ async function renderContent() {
       athCont.appendChild(card);
     });
   }
-}
+
 
 initializeData();
 
