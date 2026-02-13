@@ -19,7 +19,7 @@ let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
 window.expandImage = (src, e) => {
-  e.stopPropagation(); // ← Prevents card expand when clicking photo
+  e.stopPropagation();
   const modal = document.getElementById("imageModal");
   if (!modal) return;
   document.getElementById("modalImg").src = src;
@@ -68,33 +68,17 @@ function createPlayerCard(player) {
     </div>
   `;
 
-  // Only build expandable section if there's actual data
   let rows = [];
 
-  if (player.bench && player.bench.trim() && player.bench !== 'x') {
-    rows.push(`<div><strong>Bench:</strong> ${player.bench}</div>`);
-  }
-  if (player.squat && player.squat.trim() && player.squat !== 'x') {
-    rows.push(`<div><strong>Squat:</strong> ${player.squat}</div>`);
-  }
-  if (player.proAgility && player.proAgility.trim() && player.proAgility !== 'x') {
-    rows.push(`<div><strong>Pro Agility:</strong> ${player.proAgility}</div>`);
-  }
-  if (player.vertical && player.vertical.trim()) {
-    rows.push(`<div><strong>Vertical:</strong> ${player.vertical}</div>`);
-  }
-  if (player.satAct && player.satAct.trim() && player.satAct !== 'x') {
-    rows.push(`<div><strong>SAT/ACT:</strong> ${player.satAct}</div>`);
-  }
-  if (player.offers && player.offers.trim()) {
-    rows.push(`<div><strong>Offers:</strong> ${player.offers}</div>`);
-  }
-  if (player.twitter && player.twitter.trim()) {
-    rows.push(`<div><strong>Twitter/X:</strong> <a href="${player.twitter}" target="_blank">${player.twitter}</a></div>`);
-  }
-  if (player.recruiterNotes && player.recruiterNotes.trim()) {
-    rows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${player.recruiterNotes}</div>`);
-  }
+  if (player.twitter && player.twitter.trim() && player.twitter !== 'x') rows.push(`<div><strong>Twitter / X:</strong> <a href="${player.twitter}" target="_blank">${player.twitter}</a></div>`);
+  if (player.hudl && player.hudl.trim() && player.hudl !== 'x') rows.push(`<div><strong>Hudl URL:</strong> <a href="${player.hudl}" target="_blank">${player.hudl}</a></div>`);
+  if (player.offers && player.offers.trim() && player.offers !== 'x') rows.push(`<div><strong>Offers:</strong> ${player.offers}</div>`);
+  if (player.bench && player.bench.trim() && player.bench !== 'x') rows.push(`<div><strong>Bench:</strong> ${player.bench}</div>`);
+  if (player.squat && player.squat.trim() && player.squat !== 'x') rows.push(`<div><strong>Squat:</strong> ${player.squat}</div>`);
+  if (player.proAgility && player.proAgility.trim() && player.proAgility !== 'x') rows.push(`<div><strong>Pro Agility:</strong> ${player.proAgility}</div>`);
+  if (player.satAct && player.satAct.trim() && player.satAct !== 'x') rows.push(`<div><strong>SAT/ACT:</strong> ${player.satAct}</div>`);
+  if (player.vertical && player.vertical.trim() && player.vertical !== 'x') rows.push(`<div><strong>Vertical:</strong> ${player.vertical}</div>`);
+  if (player.recruiterNotes && player.recruiterNotes.trim() && player.recruiterNotes !== 'x') rows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${player.recruiterNotes}</div>`);
 
   const details = rows.length ? `
     <div class="player-details hidden">
@@ -111,8 +95,6 @@ function createPlayerCard(player) {
       if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
       card.classList.toggle('expanded');
     });
-  } else {
-    card.style.cursor = 'default';
   }
 
   return card;
@@ -121,7 +103,7 @@ function createPlayerCard(player) {
 async function initializeData() {
   console.log("Starting data load...");
   const loading = document.getElementById('loadingOverlay');
-  if (loading) loading.style.display = 'flex'; // ensure it's visible
+  if (loading) loading.style.display = 'flex';
 
   try {
     const [athleteSnap, coachSnap] = await Promise.all([
@@ -129,42 +111,33 @@ async function initializeData() {
       getDocs(collection(db, "coaches"))
     ]);
 
-    console.log(`Athletes: ${athleteSnap.size} docs | Coaches: ${coachSnap.size} docs`);
+    console.log(`Athletes: ${athleteSnap.size} | Coaches: ${coachSnap.size}`);
 
     const years = new Set();
-    const sportsSet = new Set();
+    const sports = new Set();
 
     athleteSnap.forEach(doc => {
-      const data = doc.data();
-      ALL_PLAYERS.push({ id: doc.id, ...data });
-      if (data.gradYear) years.add(data.gradYear);
-      if (data.sport) sportsSet.add(data.sport);
+      ALL_PLAYERS.push(doc.data());
+      if (doc.data().gradYear) years.add(doc.data().gradYear);
+      if (doc.data().sport) sports.add(doc.data().sport);
     });
 
-    coachSnap.forEach(doc => {
-      ALL_COACHES.push(doc.data());
-    });
+    coachSnap.forEach(doc => ALL_COACHES.push(doc.data()));
 
-    populateFilters(years, sportsSet);
-
-    // Render content (this adds cards to the page)
+    populateFilters(years, sports);
     await renderContent();
 
-    // Only hide loading **after cards are in the DOM**
     if (loading) {
       setTimeout(() => {
         loading.style.opacity = '0';
-        setTimeout(() => { loading.style.display = 'none'; }, 400);
-      }, 600); // small delay so user sees something
-      console.log("Loading overlay hidden after content render");
+        setTimeout(() => loading.style.display = 'none', 400);
+      }, 600);
     }
 
   } catch (err) {
-    console.error("Initialize failed:", err.code, err.message);
+    console.error("Load failed:", err);
     if (loading) {
-      loading.innerHTML = `<div style="color:red; padding:40px; text-align:center;">
-        Failed to load data<br>${err.message}<br>Check console (F12)
-      </div>`;
+      loading.innerHTML = `<div style="color:red; padding:40px; text-align:center;">Error: ${err.message}</div>`;
     }
   }
 }
@@ -180,27 +153,25 @@ function populateFilters(years, sports) {
 }
 
 async function renderContent() {
-  console.log("Rendering content...");
-  const gradYear = document.getElementById("gradSelect").value;
-  const selectedSport = document.getElementById("sportSelect").value;
-  const searchTerm = (document.getElementById("nameSearch")?.value || "").toLowerCase().trim();
-  const athleteContainer = document.getElementById("athleteContainer");
-  const coachContainer = document.getElementById("coachContainer");
+  console.log("renderContent started");
+  const year   = document.getElementById("gradSelect").value;
+  const sport  = document.getElementById("sportSelect").value;
+  const search = (document.getElementById("nameSearch")?.value || "").toLowerCase().trim();
 
-  if (!athleteContainer || !coachContainer) {
-    console.error("Missing container elements");
-    return;
-  }
+  const athCont = document.getElementById("athleteContainer");
+  const coachCont = document.getElementById("coachContainer");
 
-  // Coaches – always show when "all" or matching sport
-  const filteredCoaches = ALL_COACHES.filter(c => 
-    (selectedSport === "all" || (c.sport || "").toLowerCase() === selectedSport.toLowerCase()) &&
-    (c.name || "").toLowerCase().includes(searchTerm)
+  if (!athCont || !coachCont) return;
+
+  // Coaches
+  const coaches = ALL_COACHES.filter(c =>
+    (sport === "all" || (c.sport || "").toLowerCase() === sport.toLowerCase()) &&
+    (c.name || "").toLowerCase().includes(search)
   );
 
-  coachContainer.innerHTML = filteredCoaches.length > 0 
-    ? `<h2 class="section-title">Coaching Staff</h2>` + 
-      filteredCoaches.map(c => `
+  coachCont.innerHTML = coaches.length
+    ? `<h2 class="section-title">Coaching Staff</h2>` +
+      coaches.map(c => `
         <div class="coach-card">
           <div>
             <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
@@ -211,129 +182,6 @@ async function renderContent() {
         </div>
       `).join("")
     : "";
-
-  // Athletes – only show if specific sport selected AND year picked
-  if (selectedSport === "all" || !gradYear) {
-    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--dark-gray); border: 2px dashed var(--medium-gray); border-radius:12px;">
-      ${!gradYear ? "Select a class year" : "Select a specific sport"} to view athletes
-    </div>`;
-    return;
-  }
-
-  const filteredAthletes = ALL_PLAYERS.filter(p => 
-    String(p.gradYear) === gradYear &&
-    (p.sport || "").toLowerCase() === selectedSport.toLowerCase() &&
-    (p.name || "").toLowerCase().includes(searchTerm)
-  );
-
-  console.log(`Athletes to render: ${filteredAthletes.length}`);
-
-  athleteContainer.innerHTML = "";
-
-  if (filteredAthletes.length === 0) {
-    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px;">
-      No recruits found for this criteria.
-    </div>`;
-    return;
-  }
-
-  // Build cards with expandable content
-  filteredAthletes.forEach(p => {
-    // Front content (always visible)
-    const pos    = p.pos || p.position || '-';
-    const ht     = p.ht || '-';
-    const wt     = p.wt ? `${p.wt} lbs` : '-';
-    const gpa    = p.gpa || '-';
-    const jersey = p.jersey ? `#${p.jersey}` : '';
-    const hudl   = p.hudl || '';
-    const photo  = p.photoUrl || p.photoURL || PLACEHOLDER;
-
-    let statsHTML = '';
-    if (pos || ht || wt || gpa) {
-      statsHTML = '<div class="player-stats">';
-      if (pos)  statsHTML += `<div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${pos}</span></div>`;
-      if (ht)   statsHTML += `<div class="stat-item"><span class="stat-label">HT</span><span class="stat-value">${ht}</span></div>`;
-      if (wt)   statsHTML += `<div class="stat-item"><span class="stat-label">WT</span><span class="stat-value">${wt}</span></div>`;
-      if (gpa)  statsHTML += `<div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${gpa}</span></div>`;
-      statsHTML += '</div>';
-    }
-
-    const front = `
-      <div class="photo-wrapper" onclick="expandImage('${photo}', event)">
-        <img class="player-photo" src="${photo}" alt="${p.name || 'Athlete'}" loading="lazy">
-      </div>
-      <div class="card-content">
-        <span class="sport-badge">${p.sport || ''}</span>
-        <h3>
-          <span>${p.name || 'Unknown'}</span>
-          ${jersey ? `<span class="jersey">${jersey}</span>` : ''}
-        </h3>
-        ${statsHTML || '<div style="height:60px;"></div>'}
-        ${hudl ? `
-          <div class="player-links">
-            <a href="${hudl}" target="_blank" class="hudl">HUDL</a>
-          </div>
-        ` : ''}
-      </div>
-    `;
-
-    // Expanded content - only show fields with real data
-    let detailRows = [];
-
-    if (p.twitter && p.twitter.trim() && p.twitter !== 'x') {
-      detailRows.push(`<div><strong>Twitter / X:</strong> <a href="${p.twitter}" target="_blank">${p.twitter}</a></div>`);
-    }
-    if (p.hudl && p.hudl.trim() && p.hudl !== 'x') {
-      detailRows.push(`<div><strong>Hudl URL:</strong> <a href="${p.hudl}" target="_blank">${p.hudl}</a></div>`);
-    }
-    if (p.offers && p.offers.trim() && p.offers !== 'x') {
-      detailRows.push(`<div><strong>Offers:</strong> ${p.offers}</div>`);
-    }
-    if (p.bench && p.bench.trim() && p.bench !== 'x') {
-      detailRows.push(`<div><strong>Bench:</strong> ${p.bench}</div>`);
-    }
-    if (p.squat && p.squat.trim() && p.squat !== 'x') {
-      detailRows.push(`<div><strong>Squat:</strong> ${p.squat}</div>`);
-    }
-    if (p.proAgility && p.proAgility.trim() && p.proAgility !== 'x') {
-      detailRows.push(`<div><strong>Pro Agility:</strong> ${p.proAgility}</div>`);
-    }
-    if (p.satAct && p.satAct.trim() && p.satAct !== 'x') {
-      detailRows.push(`<div><strong>SAT/ACT:</strong> ${p.satAct}</div>`);
-    }
-    if (p.vertical && p.vertical.trim() && p.vertical !== 'x') {
-      detailRows.push(`<div><strong>Vertical:</strong> ${p.vertical}</div>`);
-    }
-    if (p.recruiterNotes && p.recruiterNotes.trim() && p.recruiterNotes !== 'x') {
-      detailRows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${p.recruiterNotes}</div>`);
-    }
-
-    const detailsSection = detailRows.length > 0 ? `
-      <div class="player-details hidden">
-        <div class="detail-grid">
-          ${detailRows.join('')}
-        </div>
-      </div>
-    ` : '';
-
-    const cardHTML = `
-      <div class="player-card">
-        ${front}
-        ${detailsSection}
-      </div>
-    `;
-
-    athleteContainer.innerHTML += cardHTML;
-  });
-
-  // Add click handler to all cards after they're added
-  document.querySelectorAll('.player-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
-      card.classList.toggle('expanded');
-    });
-  });
-}
 
   // Athletes
   athCont.innerHTML = "";
@@ -362,6 +210,8 @@ async function renderContent() {
     });
   }
 
+  console.log("renderContent finished");
+}
 
 initializeData();
 
