@@ -72,6 +72,7 @@ header {
   display: flex;
   align-items: center;
   gap: 30px;
+  justify-content: center;
 }
 
 .logo {
@@ -98,6 +99,7 @@ header {
   align-items: center;
   border: 2px solid var(--card-border);
   box-shadow: var(--shadow-sm);
+  justify-content: center;
 }
 
 .filter-group {
@@ -124,13 +126,13 @@ header {
   outline: none;
 }
 
-.filter-group input:focus,
-.filter-group select:focus {
+.filter-group select:focus,
+.filter-group input:focus {
   border-color: var(--royal-blue);
 }
 
 /* =============================
-   Grids
+   Grids & Sections
 ============================= */
 .coach-container,
 .athlete-grid {
@@ -151,16 +153,55 @@ header {
 }
 
 /* =============================
-   Cards
+   Coach Cards (simple)
 ============================= */
-.player-card,
 .coach-card {
   background: white;
+  padding: 25px;
+  border-radius: 12px;
+  border-left: 6px solid var(--royal-blue);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.coach-sport-tag {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--royal-blue);
+  margin-bottom: 5px;
+}
+
+.coach-title {
+  font-size: 0.85rem;
+  color: var(--dark-gray);
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.coach-email-link {
+  text-decoration: none;
+  font-weight: 700;
+  color: var(--royal-blue);
+  border: 1px solid var(--royal-blue);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  width: fit-content;
+}
+
+/* =============================
+   Athlete Cards – Expandable
+============================= */
+.player-card {
+  background: white;
   border-radius: 16px;
+  overflow: hidden;
   border: 2px solid var(--card-border);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
-  overflow: hidden;
+  cursor: pointer;
 }
 
 .player-card:hover {
@@ -169,16 +210,20 @@ header {
   box-shadow: var(--shadow-lg);
 }
 
+.player-card.expanded {
+  transform: scale(1.02);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  z-index: 10;
+}
+
 .photo-wrapper {
   width: 100%;
   height: 300px;
   background-color: #1a1a1b;
-  position: relative;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 4px solid var(--black);
+  cursor: pointer;
 }
 
 .player-photo {
@@ -208,6 +253,7 @@ header {
   font-weight: 800;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
 }
 
@@ -218,99 +264,97 @@ header {
 
 .player-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 8px;
+  margin: 15px 0;
+}
+
+.stat-item {
   background: #F8F9FA;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
 }
 
 .stat-label {
-  font-size: 0.55rem;
-  font-weight: 800;
+  font-size: 0.65rem;
   color: var(--dark-gray);
+  font-weight: 600;
   display: block;
 }
 
 .stat-value {
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .player-links {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .player-links a {
-  flex: 1;
-  text-align: center;
-  text-decoration: none;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 800;
+  display: inline-block;
+  background: #000;
   color: white;
-}
-
-.hudl { background: #000; }
-.twitter { background: #1DA1F2; }
-
-/* Coach Card */
-.coach-card {
-  padding: 25px;
-  border-left: 6px solid var(--royal-blue);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.coach-sport-tag {
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: var(--royal-blue);
-  margin-bottom: 5px;
-}
-
-.coach-title {
-  font-size: 0.85rem;
-  color: var(--dark-gray);
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.coach-email-link {
+  padding: 8px 16px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: 700;
-  color: var(--royal-blue);
-  border: 1px solid var(--royal-blue);
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  width: fit-content;
-  align-self: flex-start;
 }
 
-/* Modal */
+/* Expandable Details */
+.player-details {
+  padding: 20px;
+  background: #f8f9fa;
+  border-top: 1px solid var(--medium-gray);
+  display: none;
+}
+
+.player-card.expanded .player-details {
+  display: block;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.detail-grid div {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+.notes {
+  grid-column: 1 / -1;
+  background: #fff3cd;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #ffeaa7;
+  margin-top: 8px;
+}
+
+/* =============================
+   Modal / Lightbox
+============================= */
 .modal {
   display: none;
   position: fixed;
-  z-index: 99999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.95);
-  justify-content: center;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
   align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
 .modal-content {
   max-width: 90%;
-  max-height: 85%;
+  max-height: 90%;
   border: 4px solid white;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .close {
@@ -318,15 +362,30 @@ header {
   top: 20px;
   right: 30px;
   color: white;
-  font-size: 40px;
+  font-size: 48px;
   font-weight: bold;
   cursor: pointer;
 }
 
-/* Mobile */
-@media (max-width: 600px) {
+/* =============================
+   Empty / No Data Messages
+============================= */
+.empty-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dark-gray);
+  font-size: 1.1rem;
+  border: 2px dashed var(--medium-gray);
+  border-radius: 12px;
+}
+
+/* =============================
+   Responsive
+============================= */
+@media (max-width: 768px) {
   .header-content { flex-direction: column; text-align: center; }
-  .controls { flex-direction: column; align-items: stretch; }
-  .photo-wrapper { height: 260px; }
-  .player-stats { grid-template-columns: 1fr; }
+  .controls { flex-direction: column; }
+  .player-stats { grid-template-columns: repeat(2, 1fr); }
+  .detail-grid { grid-template-columns: 1fr; }
 }
