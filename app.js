@@ -70,8 +70,7 @@ function createPlayerCard(player) {
     if (vertical) extraHTML += `<div><strong>Vertical:</strong> ${vertical}</div>`;
     if (notes) extraHTML += `<div class="notes"><strong>Recruiter Notes:</strong><br>${notes}</div>`;
     if (powerClean) extraHTML += `<div><strong>Power Clean:</strong> ${powerClean}</div>`;
-    if (powerClean) extraHTML += `Power Clean: ${powerClean}`;
-    extraHTML += '</div>';
+    
   }
 
   const card = document.createElement('div');
