@@ -41,7 +41,9 @@ function createPlayerCard(player) {
   const proAgility = player.proAgility && player.proAgility.trim() && player.proAgility !== 'x' ? player.proAgility : '';
   const satAct  = player.satAct && player.satAct.trim() && player.satAct !== 'x' ? player.satAct : '';
   const vertical = player.vertical && player.vertical.trim() && player.vertical !== 'x' ? player.vertical : '';
+  const powerClean = player.powerClean && player.powerClean.trim() && player.powerClean !== 'x' ? player.powerClean : '';
   const notes   = player.recruiterNotes && player.recruiterNotes.trim() && player.recruiterNotes !== 'x' ? player.recruiterNotes : '';
+  
 
   const photo  = player.photoUrl || player.photoURL || PLACEHOLDER;
 
@@ -67,6 +69,8 @@ function createPlayerCard(player) {
     if (satAct) extraHTML += `<div><strong>SAT/ACT:</strong> ${satAct}</div>`;
     if (vertical) extraHTML += `<div><strong>Vertical:</strong> ${vertical}</div>`;
     if (notes) extraHTML += `<div class="notes"><strong>Recruiter Notes:</strong><br>${notes}</div>`;
+    if (powerClean) extraHTML += `<div><strong>Power Clean:</strong> ${powerClean}</div>`;
+    if (powerClean) extraHTML += `Power Clean: ${powerClean}`;
     extraHTML += '</div>';
   }
 
