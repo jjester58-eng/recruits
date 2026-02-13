@@ -173,22 +173,27 @@ function populateFilters(years, sports) {
 }
 
 async function renderContent() {
-  const year   = document.getElementById("gradSelect").value;
-  const sport  = document.getElementById("sportSelect").value;
-  const search = (document.getElementById("nameSearch")?.value || "").toLowerCase().trim();
+  console.log("Rendering content...");
+  const gradYear = document.getElementById("gradSelect").value;
+  const selectedSport = document.getElementById("sportSelect").value;
+  const searchTerm = (document.getElementById("nameSearch")?.value || "").toLowerCase().trim();
+  const athleteContainer = document.getElementById("athleteContainer");
+  const coachContainer = document.getElementById("coachContainer");
 
-  const athCont = document.getElementById("athleteContainer");
-  const coachCont = document.getElementById("coachContainer");
+  if (!athleteContainer || !coachContainer) {
+    console.error("Missing container elements");
+    return;
+  }
 
-  // Coaches
-  const coaches = ALL_COACHES.filter(c =>
-    (sport === "all" || (c.sport || "").toLowerCase() === sport.toLowerCase()) &&
-    (c.name || "").toLowerCase().includes(search)
+  // Coaches – always show when "all" or matching sport
+  const filteredCoaches = ALL_COACHES.filter(c => 
+    (selectedSport === "all" || (c.sport || "").toLowerCase() === selectedSport.toLowerCase()) &&
+    (c.name || "").toLowerCase().includes(searchTerm)
   );
 
-  coachCont.innerHTML = coaches.length
-    ? `<h2 class="section-title">Coaching Staff</h2>` +
-      coaches.map(c => `
+  coachContainer.innerHTML = filteredCoaches.length > 0 
+    ? `<h2 class="section-title">Coaching Staff</h2>` + 
+      filteredCoaches.map(c => `
         <div class="coach-card">
           <div>
             <div class="coach-sport-tag">${(c.sport || '').toUpperCase()}</div>
@@ -199,6 +204,129 @@ async function renderContent() {
         </div>
       `).join("")
     : "";
+
+  // Athletes – only show if specific sport selected AND year picked
+  if (selectedSport === "all" || !gradYear) {
+    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--dark-gray); border: 2px dashed var(--medium-gray); border-radius:12px;">
+      ${!gradYear ? "Select a class year" : "Select a specific sport"} to view athletes
+    </div>`;
+    return;
+  }
+
+  const filteredAthletes = ALL_PLAYERS.filter(p => 
+    String(p.gradYear) === gradYear &&
+    (p.sport || "").toLowerCase() === selectedSport.toLowerCase() &&
+    (p.name || "").toLowerCase().includes(searchTerm)
+  );
+
+  console.log(`Athletes to render: ${filteredAthletes.length}`);
+
+  athleteContainer.innerHTML = "";
+
+  if (filteredAthletes.length === 0) {
+    athleteContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px;">
+      No recruits found for this criteria.
+    </div>`;
+    return;
+  }
+
+  // Build cards with expandable content
+  filteredAthletes.forEach(p => {
+    // Front content (always visible)
+    const pos    = p.pos || p.position || '-';
+    const ht     = p.ht || '-';
+    const wt     = p.wt ? `${p.wt} lbs` : '-';
+    const gpa    = p.gpa || '-';
+    const jersey = p.jersey ? `#${p.jersey}` : '';
+    const hudl   = p.hudl || '';
+    const photo  = p.photoUrl || p.photoURL || PLACEHOLDER;
+
+    let statsHTML = '';
+    if (pos || ht || wt || gpa) {
+      statsHTML = '<div class="player-stats">';
+      if (pos)  statsHTML += `<div class="stat-item"><span class="stat-label">POS</span><span class="stat-value">${pos}</span></div>`;
+      if (ht)   statsHTML += `<div class="stat-item"><span class="stat-label">HT</span><span class="stat-value">${ht}</span></div>`;
+      if (wt)   statsHTML += `<div class="stat-item"><span class="stat-label">WT</span><span class="stat-value">${wt}</span></div>`;
+      if (gpa)  statsHTML += `<div class="stat-item"><span class="stat-label">GPA</span><span class="stat-value">${gpa}</span></div>`;
+      statsHTML += '</div>';
+    }
+
+    const front = `
+      <div class="photo-wrapper" onclick="expandImage('${photo}', event)">
+        <img class="player-photo" src="${photo}" alt="${p.name || 'Athlete'}" loading="lazy">
+      </div>
+      <div class="card-content">
+        <span class="sport-badge">${p.sport || ''}</span>
+        <h3>
+          <span>${p.name || 'Unknown'}</span>
+          ${jersey ? `<span class="jersey">${jersey}</span>` : ''}
+        </h3>
+        ${statsHTML || '<div style="height:60px;"></div>'}
+        ${hudl ? `
+          <div class="player-links">
+            <a href="${hudl}" target="_blank" class="hudl">HUDL</a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Expanded content - only show fields with real data
+    let detailRows = [];
+
+    if (p.twitter && p.twitter.trim() && p.twitter !== 'x') {
+      detailRows.push(`<div><strong>Twitter / X:</strong> <a href="${p.twitter}" target="_blank">${p.twitter}</a></div>`);
+    }
+    if (p.hudl && p.hudl.trim() && p.hudl !== 'x') {
+      detailRows.push(`<div><strong>Hudl URL:</strong> <a href="${p.hudl}" target="_blank">${p.hudl}</a></div>`);
+    }
+    if (p.offers && p.offers.trim() && p.offers !== 'x') {
+      detailRows.push(`<div><strong>Offers:</strong> ${p.offers}</div>`);
+    }
+    if (p.bench && p.bench.trim() && p.bench !== 'x') {
+      detailRows.push(`<div><strong>Bench:</strong> ${p.bench}</div>`);
+    }
+    if (p.squat && p.squat.trim() && p.squat !== 'x') {
+      detailRows.push(`<div><strong>Squat:</strong> ${p.squat}</div>`);
+    }
+    if (p.proAgility && p.proAgility.trim() && p.proAgility !== 'x') {
+      detailRows.push(`<div><strong>Pro Agility:</strong> ${p.proAgility}</div>`);
+    }
+    if (p.satAct && p.satAct.trim() && p.satAct !== 'x') {
+      detailRows.push(`<div><strong>SAT/ACT:</strong> ${p.satAct}</div>`);
+    }
+    if (p.vertical && p.vertical.trim() && p.vertical !== 'x') {
+      detailRows.push(`<div><strong>Vertical:</strong> ${p.vertical}</div>`);
+    }
+    if (p.recruiterNotes && p.recruiterNotes.trim() && p.recruiterNotes !== 'x') {
+      detailRows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${p.recruiterNotes}</div>`);
+    }
+
+    const detailsSection = detailRows.length > 0 ? `
+      <div class="player-details hidden">
+        <div class="detail-grid">
+          ${detailRows.join('')}
+        </div>
+      </div>
+    ` : '';
+
+    const cardHTML = `
+      <div class="player-card">
+        ${front}
+        ${detailsSection}
+      </div>
+    `;
+
+    athleteContainer.innerHTML += cardHTML;
+  });
+
+  // Add click handler to all cards after they're added
+  document.querySelectorAll('.player-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
+      card.classList.toggle('expanded');
+    });
+  });
+}
 
   // Athletes
   athCont.innerHTML = "";
