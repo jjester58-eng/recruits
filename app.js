@@ -18,7 +18,8 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = [];
 const PLACEHOLDER = "https://via.placeholder.com/400x500.png?text=WHS+ATHLETICS";
 
-window.expandImage = (src) => {
+window.expandImage = (src, e) => {
+  e.stopPropagation(); // ← Prevents card expand when clicking photo
   const modal = document.getElementById("imageModal");
   if (!modal) return;
   document.getElementById("modalImg").src = src;
@@ -26,7 +27,6 @@ window.expandImage = (src) => {
 };
 
 function createPlayerCard(player) {
-  // Front: only show real data
   const pos    = player.pos || player.position || '';
   const ht     = player.ht || '';
   const wt     = player.wt ? `${player.wt} lbs` : '';
@@ -46,8 +46,12 @@ function createPlayerCard(player) {
   }
 
   const front = `
-    <div class="photo-wrapper" onclick="expandImage('${photo}')">
-      <img class="player-photo" src="${photo}" alt="${player.name || 'Athlete'}" loading="lazy">
+    <div class="photo-wrapper">
+      <img class="player-photo" 
+           src="${photo}" 
+           alt="${player.name || 'Athlete'}" 
+           loading="lazy"
+           onclick="expandImage('${photo}', event)">
     </div>
     <div class="card-content">
       <span class="sport-badge">${player.sport || ''}</span>
@@ -64,35 +68,35 @@ function createPlayerCard(player) {
     </div>
   `;
 
-  // Expanded: only real data
+  // Only build expandable section if there's actual data
   let rows = [];
 
-  if (player.bench && player.bench.trim() !== '' && player.bench !== 'x') {
+  if (player.bench && player.bench.trim() && player.bench !== 'x') {
     rows.push(`<div><strong>Bench:</strong> ${player.bench}</div>`);
   }
-  if (player.squat && player.squat.trim() !== '' && player.squat !== 'x') {
+  if (player.squat && player.squat.trim() && player.squat !== 'x') {
     rows.push(`<div><strong>Squat:</strong> ${player.squat}</div>`);
   }
-  if (player.proAgility && player.proAgility.trim() !== '' && player.proAgility !== 'x') {
+  if (player.proAgility && player.proAgility.trim() && player.proAgility !== 'x') {
     rows.push(`<div><strong>Pro Agility:</strong> ${player.proAgility}</div>`);
   }
-  if (player.vertical && player.vertical.trim() !== '') {
+  if (player.vertical && player.vertical.trim()) {
     rows.push(`<div><strong>Vertical:</strong> ${player.vertical}</div>`);
   }
-  if (player.satAct && player.satAct.trim() !== '' && player.satAct !== 'x') {
+  if (player.satAct && player.satAct.trim() && player.satAct !== 'x') {
     rows.push(`<div><strong>SAT/ACT:</strong> ${player.satAct}</div>`);
   }
-  if (player.offers && player.offers.trim() !== '') {
+  if (player.offers && player.offers.trim()) {
     rows.push(`<div><strong>Offers:</strong> ${player.offers}</div>`);
   }
-  if (player.twitter && player.twitter.trim() !== '') {
+  if (player.twitter && player.twitter.trim()) {
     rows.push(`<div><strong>Twitter/X:</strong> <a href="${player.twitter}" target="_blank">${player.twitter}</a></div>`);
   }
-  if (player.recruiterNotes && player.recruiterNotes.trim() !== '') {
+  if (player.recruiterNotes && player.recruiterNotes.trim()) {
     rows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${player.recruiterNotes}</div>`);
   }
 
-  const details = rows.length > 0 ? `
+  const details = rows.length ? `
     <div class="player-details hidden">
       <div class="detail-grid">${rows.join('')}</div>
     </div>
@@ -107,6 +111,8 @@ function createPlayerCard(player) {
       if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
       card.classList.toggle('expanded');
     });
+  } else {
+    card.style.cursor = 'default';
   }
 
   return card;
@@ -136,13 +142,23 @@ async function initializeData() {
     coachSnap.forEach(doc => ALL_COACHES.push(doc.data()));
 
     populateFilters(years, sports);
+
+    // Keep loading visible until content is rendered
     await renderContent();
 
-    if (loading) loading.style.display = 'none';
+    // Only hide after cards are actually in the DOM
+    if (loading) {
+      setTimeout(() => { loading.style.display = 'none'; }, 300);
+      console.log("Loading overlay hidden");
+    }
 
   } catch (err) {
     console.error("Load failed:", err);
-    if (loading) loading.innerHTML = `<div style="color:red;padding:40px;text-align:center;">Error: ${err.message}</div>`;
+    if (loading) {
+      loading.innerHTML = `<div style="color:red;padding:40px;text-align:center;">
+        Error loading data<br>${err.message}
+      </div>`;
+    }
   }
 }
 
