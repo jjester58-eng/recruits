@@ -119,44 +119,51 @@ function createPlayerCard(player) {
 }
 
 async function initializeData() {
-  console.log("Loading data...");
+  console.log("Starting data load...");
   const loading = document.getElementById('loadingOverlay');
+  if (loading) loading.style.display = 'flex'; // ensure it's visible
+
   try {
-    const [athSnap, coachSnap] = await Promise.all([
+    const [athleteSnap, coachSnap] = await Promise.all([
       getDocs(collection(db, "athletes")),
       getDocs(collection(db, "coaches"))
     ]);
 
-    console.log(`Athletes: ${athSnap.size} | Coaches: ${coachSnap.size}`);
+    console.log(`Athletes: ${athleteSnap.size} docs | Coaches: ${coachSnap.size} docs`);
 
     const years = new Set();
-    const sports = new Set();
+    const sportsSet = new Set();
 
-    athSnap.forEach(doc => {
+    athleteSnap.forEach(doc => {
       const data = doc.data();
-      ALL_PLAYERS.push(data);
+      ALL_PLAYERS.push({ id: doc.id, ...data });
       if (data.gradYear) years.add(data.gradYear);
-      if (data.sport) sports.add(data.sport);
+      if (data.sport) sportsSet.add(data.sport);
     });
 
-    coachSnap.forEach(doc => ALL_COACHES.push(doc.data()));
+    coachSnap.forEach(doc => {
+      ALL_COACHES.push(doc.data());
+    });
 
-    populateFilters(years, sports);
+    populateFilters(years, sportsSet);
 
-    // Keep loading visible until content is rendered
+    // Render content (this adds cards to the page)
     await renderContent();
 
-    // Only hide after cards are actually in the DOM
+    // Only hide loading **after cards are in the DOM**
     if (loading) {
-      setTimeout(() => { loading.style.display = 'none'; }, 300);
-      console.log("Loading overlay hidden");
+      setTimeout(() => {
+        loading.style.opacity = '0';
+        setTimeout(() => { loading.style.display = 'none'; }, 400);
+      }, 600); // small delay so user sees something
+      console.log("Loading overlay hidden after content render");
     }
 
   } catch (err) {
-    console.error("Load failed:", err);
+    console.error("Initialize failed:", err.code, err.message);
     if (loading) {
-      loading.innerHTML = `<div style="color:red;padding:40px;text-align:center;">
-        Error loading data<br>${err.message}
+      loading.innerHTML = `<div style="color:red; padding:40px; text-align:center;">
+        Failed to load data<br>${err.message}<br>Check console (F12)
       </div>`;
     }
   }
