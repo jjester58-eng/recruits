@@ -25,17 +25,29 @@ let ALL_PLAYERS = [];
 let ALL_COACHES = {};
 
 /* ==============================
+   Sport Key Normalizer (fixes case, spacing, punctuation issues)
+============================== */
+function normalizeSportKey(sport) {
+  if (!sport || typeof sport !== "string") return null;
+  return sport
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")           // collapse multiple spaces
+    .replace(/[^a-z0-9 ]/g, "")     // remove punctuation/symbols
+    .replace(/\s+/g, "-")           // spaces → hyphens for consistency
+    .replace(/-+/g, "-");           // no double hyphens
+}
+
+/* ==============================
    Load All Data (One-time)
 ============================== */
 async function initializeData() {
   try {
-    // Load all collections in parallel
     const [athleteSnap, coachSnap] = await Promise.all([
       getDocs(collection(db, "athletes")),
       getDocs(collection(db, "coaches"))
     ]);
 
-    // Build players array and collect unique years/sports
     const years = new Set();
     const sports = new Set();
     const players = [];
@@ -66,25 +78,35 @@ async function initializeData() {
 
     ALL_PLAYERS = players;
 
-    // Build coaches map
+    // Build coaches map with normalized keys
     coachSnap.forEach(doc => {
       const data = doc.data();
       if (data.sport) {
-        ALL_COACHES[data.sport.toLowerCase()] = {
-          name: data.name,
-          title: data.title,
-          email: data.email,
-          sport: data.sport
-        };
+        const key = normalizeSportKey(data.sport);
+        if (key) {
+          ALL_COACHES[key] = {
+            name: data.name,
+            title: data.title,
+            email: data.email,
+            sport: data.sport,           // original for display
+            twitter: data.twitter || "",
+            hudl: data.hudl || "",
+            offers: data.offers || "",
+            bench: data.bench || "",
+            squat: data.squat || "",
+            proAgility: data.proAgility || "",
+            satAct: data.satAct || "",
+            vertical: data.vertical || "",
+            recruiterNotes: data.recruiterNotes || ""
+          };
+        }
       }
     });
 
-    // Populate filter dropdowns
     populateFilters(years, sports);
     
-    console.log(`Loaded ${players.length} players, ${years.size} years, ${sports.size} sports`);
+    console.log(`Loaded ${players.length} players, ${Object.keys(ALL_COACHES).length} coaches`);
     
-    // Initial render
     renderAthletes();
     renderCoaches();
 
@@ -102,13 +124,11 @@ function populateFilters(years, sports) {
   const gradSelect = document.getElementById("gradSelect");
   const sportSelect = document.getElementById("sportSelect");
 
-  // Populate grad years
   const sortedYears = [...years].sort();
   gradSelect.innerHTML = sortedYears
     .map(y => `<option value="${y}">Class of ${y}</option>`)
     .join("");
 
-  // Populate sports
   const sortedSports = [...sports].sort();
   sportSelect.innerHTML = 
     `<option value="all">All Sports</option>` +
@@ -118,18 +138,19 @@ function populateFilters(years, sports) {
 }
 
 /* ==============================
-   Render Coaches
+   Render Coaches – hover quick links + click to expand full info
 ============================== */
 function renderCoaches() {
-  const selectedSport = document.getElementById("sportSelect").value;
+  const selectedSportRaw = document.getElementById("sportSelect").value;
   const container = document.getElementById("coachContainer");
 
-  // Filter coaches based on sport selection
   let coachesToShow = [];
-  if (selectedSport === "all") {
+
+  if (selectedSportRaw === "all") {
     coachesToShow = Object.values(ALL_COACHES);
   } else {
-    const coach = ALL_COACHES[selectedSport];
+    const normalized = normalizeSportKey(selectedSportRaw);
+    const coach = ALL_COACHES[normalized];
     if (coach) coachesToShow = [coach];
   }
 
@@ -146,15 +167,52 @@ function renderCoaches() {
           <h3>${c.name}</h3>
           ${c.sport ? `<div class="sport-tag">${c.sport}</div>` : ''}
           ${c.title ? `<div class="title">${c.title}</div>` : ''}
-          ${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : ''}
+          ${c.email ? `<a href="mailto:${c.email}" class="coach-email">${c.email}</a>` : ''}
+
+          <!-- Quick links – appear on hover -->
+          <div class="quick-links">
+            ${c.hudl ? `<a href="${c.hudl}" target="_blank" rel="noopener noreferrer" class="hudl-link">🎥 Hudl</a>` : ''}
+            ${c.twitter ? `<a href="${c.twitter}" target="_blank" rel="noopener noreferrer" class="twitter-link">𝕏</a>` : ''}
+          </div>
+
+          <!-- Expanded section – shown on click -->
+          <div class="coach-details">
+            <div class="coach-stats">
+              ${c.offers     ? `<div class="stat-item"><span class="stat-label">Offers</span><span class="stat-value">${c.offers}</span></div>` : ''}
+              ${c.bench      ? `<div class="stat-item"><span class="stat-label">Bench</span><span class="stat-value">${c.bench}</span></div>` : ''}
+              ${c.squat      ? `<div class="stat-item"><span class="stat-label">Squat</span><span class="stat-value">${c.squat}</span></div>` : ''}
+              ${c.proAgility ? `<div class="stat-item"><span class="stat-label">Pro Agility</span><span class="stat-value">${c.proAgility}</span></div>` : ''}
+              ${c.satAct     ? `<div class="stat-item"><span class="stat-label">SAT/ACT</span><span class="stat-value">${c.satAct}</span></div>` : ''}
+              ${c.vertical   ? `<div class="stat-item"><span class="stat-label">Vertical</span><span class="stat-value">${c.vertical}</span></div>` : ''}
+            </div>
+
+            ${c.recruiterNotes ? `
+              <div class="coach-notes">
+                <strong>Recruiter Notes</strong><br>${c.recruiterNotes}
+              </div>
+            ` : ''}
+
+            <div class="coach-full-links">
+              ${c.hudl   ? `<a href="${c.hudl}"   target="_blank" rel="noopener noreferrer">Hudl URL</a>` : ''}
+              ${c.twitter ? `<a href="${c.twitter}" target="_blank" rel="noopener noreferrer">Twitter / X</a>` : ''}
+            </div>
+          </div>
         </div>
       `).join("")}
     </div>
   `;
+
+  // Click handler – expand/collapse, but ignore link clicks
+  container.querySelectorAll(".coach-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") return; // don't toggle when clicking links
+      card.classList.toggle("expanded");
+    });
+  });
 }
 
 /* ==============================
-   Create Player Card
+   Create Player Card (unchanged)
 ============================== */
 function createPlayerCard(player) {
   const card = document.createElement("div");
@@ -209,7 +267,7 @@ function createPlayerCard(player) {
 }
 
 /* ==============================
-   Render Athletes
+   Render Athletes (unchanged)
 ============================== */
 function renderAthletes() {
   const gradYearStr = document.getElementById("gradSelect").value;
@@ -221,14 +279,12 @@ function renderAthletes() {
     return;
   }
 
-  // Filter players
   const filtered = ALL_PLAYERS.filter(p => {
     const gradMatch = p.gradYear == gradYearStr;
     const sportMatch = sport === "all" || p.sport?.toLowerCase() === sport;
     return gradMatch && sportMatch;
   });
 
-  // Handle empty results
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="no-data">
@@ -239,10 +295,8 @@ function renderAthletes() {
     return;
   }
 
-  // Sort by name
   filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-  // Render cards
   container.innerHTML = "";
   filtered.forEach(player => {
     container.appendChild(createPlayerCard(player));
@@ -256,10 +310,8 @@ function renderAthletes() {
 ============================== */
 (async function init() {
   try {
-    // Load all data once
     await initializeData();
 
-    // Set up event listeners
     document.getElementById("gradSelect").addEventListener("change", () => {
       renderAthletes();
       renderCoaches();

@@ -171,12 +171,18 @@ header {
   gap: 20px;
 }
 
+/* =============================
+   Coach Card (hover + click behavior)
+============================= */
 .coach-card {
   background: var(--light-gray);
   padding: 20px;
   border-radius: 8px;
   border: 2px solid var(--royal-blue);
   transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .coach-card:hover {
@@ -218,6 +224,123 @@ header {
 .coach-card a:hover {
   color: var(--dark-blue);
   text-decoration: underline;
+}
+
+.coach-card .coach-email {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+/* Quick links (appear on mouse hover) */
+.quick-links {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.coach-card:hover .quick-links {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quick-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--royal-blue);
+  color: var(--white);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.quick-links a:hover {
+  background: var(--dark-blue);
+  transform: scale(1.05);
+}
+
+.quick-links a.hudl-link {
+  background: #000;
+}
+
+.quick-links a.twitter-link {
+  background: #1DA1F2;
+}
+
+/* Expanded details (click to show) */
+.coach-details {
+  display: none;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--light-gray);
+  transition: all 0.4s ease;
+}
+
+.coach-card.expanded .coach-details {
+  display: block;
+}
+
+.coach-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  background: var(--white);
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--light-gray);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+}
+
+.coach-notes {
+  background: var(--white);
+  padding: 18px;
+  border-radius: 8px;
+  border: 1px solid var(--light-gray);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.coach-full-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.coach-full-links a {
+  background: var(--royal-blue);
+  color: var(--white);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* =============================
@@ -450,6 +573,10 @@ header {
   }
 
   .coach-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-stats {
     grid-template-columns: 1fr;
   }
 }
