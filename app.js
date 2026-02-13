@@ -60,17 +60,18 @@ function createPlayerCard(player) {
   let extraHTML = '';
   if (hudl || twitter || offers || bench || squat || proAgility || satAct || vertical || notes) {
     extraHTML = '<div class="player-extra">';
-    if (hudl) extraHTML += `<div><strong>Hudl URL:</strong> <a href="${hudl}" target="_blank">${hudl}</a></div>`;
-    if (twitter) extraHTML += `<div><strong>Twitter / X:</strong> <a href="${twitter}" target="_blank">${twitter}</a></div>`;
-    if (offers) extraHTML += `<div><strong>Offers:</strong> ${offers}</div>`;
+   
+   
     if (bench) extraHTML += `<div><strong>Bench:</strong> ${bench}</div>`;
     if (squat) extraHTML += `<div><strong>Squat:</strong> ${squat}</div>`;
     if (proAgility) extraHTML += `<div><strong>Pro Agility:</strong> ${proAgility}</div>`;
-    if (satAct) extraHTML += `<div><strong>SAT/ACT:</strong> ${satAct}</div>`;
-    if (vertical) extraHTML += `<div><strong>Vertical:</strong> ${vertical}</div>`;
-    if (notes) extraHTML += `<div class="notes"><strong>Recruiter Notes:</strong><br>${notes}</div>`;
     if (powerClean) extraHTML += `<div><strong>Power Clean:</strong> ${powerClean}</div>`;
-    
+    if (vertical) extraHTML += `<div><strong>Vertical:</strong> ${vertical}</div>`;
+    if (hudl) extraHTML += `<div><strong>Hudl URL:</strong> <a href="${hudl}" target="_blank">${hudl}</a></div>`;
+    if (twitter) extraHTML += `<div><strong>Twitter / X:</strong> <a href="${twitter}" target="_blank">${twitter}</a></div>`;
+    if (satAct) extraHTML += `<div><strong>SAT/ACT:</strong> ${satAct}</div>`;
+    if (offers) extraHTML += `<div><strong>Offers:</strong> ${offers}</div>`;
+    if (notes) extraHTML += `<div class="notes"><strong>Recruiter Notes:</strong><br>${notes}</div>`;
   }
 
   const card = document.createElement('div');
