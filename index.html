@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weatherford HS Athletic Recruiting</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-  <div class="header-content">
-    <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="Weatherford Logo" class="logo">
-    <div class="header-text">
-      <h1>Weatherford High School</h1>
-      <p>Athletic Recruiting Portal</p>
+
+  <header>
+    <div class="header-content">
+      <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" alt="WHS Logo" class="logo">
+      <div class="header-text">
+        <h1>Weatherford High School</h1>
+        <p>Athletic Recruiting Portal</p>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
 <section class="controls">
   <div class="filter-group">
@@ -30,14 +34,33 @@
       <option value="all">All Sports</option>
     </select>
   </div>
-  <button class="btn-primary" onclick="window.open('https://script.google.com/a/macros/weatherfordisd.com/s/AKfycbxUu0xd-6f090JPhbNRo2l6jxO9x0Ep_6X5rjQxX0VtS8Rgb2aRMz2Z16fgc8o2TL49/exec','_blank')">
+  <button class="btn-primary" onclick="window.open('https://script.google.com/a/macros/weatherfordisd.com/s/AKfycbwq03n2XGzw68-cdTdKzg-RzSmEjojvEhIhdnn2ONT8_gjF0VFvldlLwjv1iKPgxGdH/exec','_blank')">
     ⚙️ Manage Athletes
   </button>
 </section>
 
-<div id="coachContainer" class="coach-container"></div>
-<div id="athleteContainer" class="athlete-grid"></div>
+  <div id="coachContainer" class="coach-container"></div>
+  <main id="athleteContainer" class="athlete-grid"></main>
 
-<script type="module" src="app.js"></script>
+  <div id="imageModal" class="modal" onclick="this.style.display='none'">
+    <span class="close">×</span>
+    <img class="modal-content" id="modalImg">
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+  <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <img src="https://3.files.edl.io/ec1d/23/08/08/202417-93245495-76a7-475c-af85-c7a6982d169e.png" 
+         style="width:120px; animation: roo-pulse 1.5s infinite ease-in-out;" alt="Loading...">
+    <p style="margin-top:20px; font-weight:800; color:#0033a0; letter-spacing:2px;">LOADING RECRUITS...</p>
+  </div>
+
+  <style>
+    @keyframes roo-pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+  </style>
 </body>
 </html>
