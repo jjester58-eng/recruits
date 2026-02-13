@@ -27,12 +27,22 @@ window.expandImage = (src, e) => {
 };
 
 function createPlayerCard(player) {
+  // All visible fields — only show if real data exists
   const pos    = player.pos || player.position || '';
   const ht     = player.ht || '';
   const wt     = player.wt ? `${player.wt} lbs` : '';
   const gpa    = player.gpa || '';
   const jersey = player.jersey ? `#${player.jersey}` : '';
   const hudl   = player.hudl || '';
+  const twitter = player.twitter || '';
+  const offers  = player.offers || '';
+  const bench   = player.bench && player.bench.trim() && player.bench !== 'x' ? player.bench : '';
+  const squat   = player.squat && player.squat.trim() && player.squat !== 'x' ? player.squat : '';
+  const proAgility = player.proAgility && player.proAgility.trim() && player.proAgility !== 'x' ? player.proAgility : '';
+  const satAct  = player.satAct && player.satAct.trim() && player.satAct !== 'x' ? player.satAct : '';
+  const vertical = player.vertical && player.vertical.trim() && player.vertical !== 'x' ? player.vertical : '';
+  const notes   = player.recruiterNotes && player.recruiterNotes.trim() && player.recruiterNotes !== 'x' ? player.recruiterNotes : '';
+
   const photo  = player.photoUrl || player.photoURL || PLACEHOLDER;
 
   let statsHTML = '';
@@ -45,7 +55,24 @@ function createPlayerCard(player) {
     statsHTML += '</div>';
   }
 
-  const front = `
+  let extraHTML = '';
+  if (hudl || twitter || offers || bench || squat || proAgility || satAct || vertical || notes) {
+    extraHTML = '<div class="player-extra">';
+    if (hudl) extraHTML += `<div><strong>Hudl URL:</strong> <a href="${hudl}" target="_blank">${hudl}</a></div>`;
+    if (twitter) extraHTML += `<div><strong>Twitter / X:</strong> <a href="${twitter}" target="_blank">${twitter}</a></div>`;
+    if (offers) extraHTML += `<div><strong>Offers:</strong> ${offers}</div>`;
+    if (bench) extraHTML += `<div><strong>Bench:</strong> ${bench}</div>`;
+    if (squat) extraHTML += `<div><strong>Squat:</strong> ${squat}</div>`;
+    if (proAgility) extraHTML += `<div><strong>Pro Agility:</strong> ${proAgility}</div>`;
+    if (satAct) extraHTML += `<div><strong>SAT/ACT:</strong> ${satAct}</div>`;
+    if (vertical) extraHTML += `<div><strong>Vertical:</strong> ${vertical}</div>`;
+    if (notes) extraHTML += `<div class="notes"><strong>Recruiter Notes:</strong><br>${notes}</div>`;
+    extraHTML += '</div>';
+  }
+
+  const card = document.createElement('div');
+  card.className = 'player-card';
+  card.innerHTML = `
     <div class="photo-wrapper">
       <img class="player-photo" 
            src="${photo}" 
@@ -60,42 +87,15 @@ function createPlayerCard(player) {
         ${jersey ? `<span class="jersey">${jersey}</span>` : ''}
       </h3>
       ${statsHTML || '<div style="height:60px;"></div>'}
-      ${hudl ? `
-        <div class="player-links">
-          <a href="${hudl}" target="_blank" class="hudl">Hudl</a>
-        </div>
-      ` : ''}
+      ${extraHTML || '<div style="height:20px;"></div>'}
     </div>
   `;
 
-  let rows = [];
-
-  if (player.twitter && player.twitter.trim() && player.twitter !== 'x') rows.push(`<div><strong>Twitter / X:</strong> <a href="${player.twitter}" target="_blank">${player.twitter}</a></div>`);
-  if (player.hudl && player.hudl.trim() && player.hudl !== 'x') rows.push(`<div><strong>Hudl URL:</strong> <a href="${player.hudl}" target="_blank">${player.hudl}</a></div>`);
-  if (player.offers && player.offers.trim() && player.offers !== 'x') rows.push(`<div><strong>Offers:</strong> ${player.offers}</div>`);
-  if (player.bench && player.bench.trim() && player.bench !== 'x') rows.push(`<div><strong>Bench:</strong> ${player.bench}</div>`);
-  if (player.squat && player.squat.trim() && player.squat !== 'x') rows.push(`<div><strong>Squat:</strong> ${player.squat}</div>`);
-  if (player.proAgility && player.proAgility.trim() && player.proAgility !== 'x') rows.push(`<div><strong>Pro Agility:</strong> ${player.proAgility}</div>`);
-  if (player.satAct && player.satAct.trim() && player.satAct !== 'x') rows.push(`<div><strong>SAT/ACT:</strong> ${player.satAct}</div>`);
-  if (player.vertical && player.vertical.trim() && player.vertical !== 'x') rows.push(`<div><strong>Vertical:</strong> ${player.vertical}</div>`);
-  if (player.recruiterNotes && player.recruiterNotes.trim() && player.recruiterNotes !== 'x') rows.push(`<div class="notes"><strong>Recruiter Notes:</strong><br>${player.recruiterNotes}</div>`);
-
-  const details = rows.length ? `
-    <div class="player-details hidden">
-      <div class="detail-grid">${rows.join('')}</div>
-    </div>
-  ` : '';
-
-  const card = document.createElement('div');
-  card.className = 'player-card';
-  card.innerHTML = front + details;
-
-  if (details) {
-    card.addEventListener('click', e => {
-      if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
-      card.classList.toggle('expanded');
-    });
-  }
+  // Keep card clickable/expandable (visual feedback only)
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'A' || e.target.tagName === 'IMG') return;
+    card.classList.toggle('expanded');
+  });
 
   return card;
 }
@@ -131,7 +131,7 @@ async function initializeData() {
       setTimeout(() => {
         loading.style.opacity = '0';
         setTimeout(() => loading.style.display = 'none', 400);
-      }, 600);
+      }, 800);
     }
 
   } catch (err) {
